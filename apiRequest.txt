@@ -83,8 +83,17 @@ returns:
     }
 
 >> handleMakeRequest
-Description: the seller will make a request to 
+Description: the seller will make a request, that request will be added to the request table.
+
+More info: When the seller makes a request ie. on some form, they will have to provide all the details of a product if they are trying to get
+those added to the products and tyre_listings tables. 
+Behind the scenes, the product_data will have to be sent to the GOTapi.php in JSON format, it will have to have all the info below.
+That product data will be stored in the product_data column (data type: text) in the requests table, another function will handle insertion.
+
+action: there are three actions => add, update, remove 
+
 type: MakeRequest
+
 
 expects:
 {
