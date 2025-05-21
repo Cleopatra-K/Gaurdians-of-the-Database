@@ -123,7 +123,7 @@ class ProductAPI {
     }
 
 
-
+    //works
     private function handleRegistration($data) {
         //!explain the details of database and that Customers have surnames, other roles dont have
         
@@ -167,7 +167,8 @@ class ProductAPI {
         }
     
         //more password validation, making sure that the password is strong
-        $password = $data['password'];
+        $password = $data['password_hashed'];
+
         if (strlen($password) < 8) {
             throw new Exception("Password must be at least 8 characters long", 400);
         }
@@ -197,10 +198,10 @@ class ProductAPI {
 
             //generate security elements
             $apiKey = bin2hex(random_bytes(16));
-            $salt = bin2hex(random_bytes(16));
+            $salt = bin2hex(random_bytes(4));
 
             //creating a hashed password
-            $hashedPassword = hash('sha256', $salt.$data['password']);
+            $hashedPassword = hash('sha256', $salt.$data['password_hashed']);
             
             $this->connection->begin_transaction();
 

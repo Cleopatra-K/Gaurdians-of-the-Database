@@ -1,8 +1,8 @@
 >> handleLogin
-    type: handleLogin
+    type: Login
     expects:
         {
-            "type": "handleLogin"
+            "type": "Login"
             "username": " ",
             "password": " "
         }
@@ -117,7 +117,18 @@ returns:
 Description:
 
 >> handleEditRequest
+Description:
+
+
+
 >> addProduct
+Description:
+
 >> updateProduct
+Description:
+
+
 >> removeProduct
+Description:
+
                    
