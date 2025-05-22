@@ -1,0 +1,38 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #FDFFFC;
+    color: #001219;
+}
+.navbar {
+    background: #2660A4;
+    padding: 10px;
+}
+.navbar a {
+    color: #FDFFFC;
+    margin-right: 15px;
+    text-decoration: none;
+}
+.container {
+    margin: 30px auto;
+    max-width: 900px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+}
+h1, h2 {
+    color: #2660A4;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+th, td {
+    border: 1px solid #2660A4;
+    padding: 8px;
+    text-align: left;
+}
+th {
+    background: #FFA500;
+    color: #001219;
+}

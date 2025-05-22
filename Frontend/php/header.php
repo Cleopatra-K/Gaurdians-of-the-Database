@@ -45,3 +45,5 @@ session_start();
         <?php endif; ?>
     </ul>
 </nav>
+
+<?php include 'footer.php'; ?>
