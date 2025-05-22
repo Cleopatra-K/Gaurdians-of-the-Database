@@ -1,0 +1,81 @@
+/*--CT kWENDA, U23547121*/
+body{
+    background-color: #f4e1e0;
+    text-align: center;
+    
+}
+
+.header h1{
+    font-family: 'Playfair Display', serif;    
+    letter-spacing: -1px;
+    text-align: center;
+    margin-bottom: 0.225px ;
+    font-size: 25px;
+    word-break: break-word; 
+    white-space: nowrap; /* Ensures text doesn’t wrap unless needed */
+    overflow: hidden;
+    text-overflow: ellipsis; 
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 150px ;
+}
+
+#logo-img img {
+    width: 600px; /* Adjust size as needed */
+    height: auto;
+    margin-top: -200px; /* Moves the image up */
+}
+
+.slogan {
+    
+    margin-top: -300px; /* slogan position */
+}
+
+.prac-buttons {
+    margin-top: 20px; /* makes buttons have space below */
+}
+
+/*this takes out thos lines that werelinking my buttons*/
+a {
+    text-decoration: none; /* Removes underline */
+    display: inline-block; /* Ensures button shape stays intact */
+}
+
+.btn-style:hover{
+    background-color: #333; /* Darker contrast */
+    color: #eac9c1; /* Inverted text color */
+    transform: translateY(-3px); /* Slight lift effect */
+}
+
+.btn-style{
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; /* Adjusted for readability */
+    font-weight: 500;
+    background-color: #eac9c1; /* Soft muted pink */
+    color: #333; 
+    border: 2px solid #333; /* Adds a classy border */
+    padding: 12px 24px; 
+    border-radius: 25px; /* Smooth rounded corners */
+    cursor: pointer;/*makes the hand pointer cursor*/
+    text-transform: uppercase; /* Makes text look cool */
+    transition: all 0.3s ease-in-out;
+    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1); /* Subtle depth so it gives shadow effect */
+}
+
+.hidden {
+    display: none;
+}
+
+/*img{
+    max-height: 500px;
+}*/
+
+/*.prac-buttons{
+    display: flex;
+    justify-content: center;
+    gap:5px;
+}*/
