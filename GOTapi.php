@@ -532,6 +532,7 @@ class ProductAPI {
     }
 
 
+    //works
     private function handleShowRequest($data) {
         //show rejected- an admin should be able to see all the requests that were rejected
         //show approved- an admin should be able to see all approved requests
@@ -580,6 +581,7 @@ class ProductAPI {
         }
     }
 
+    //works
     private function handleEditRequest($data) {
 
         /*and admin should be able to edit a request, so they should be able to approve a request or deny it, and when they approve the request 
@@ -649,13 +651,16 @@ class ProductAPI {
             $this->sendSuccessResponse([
                 'status' => 'success',
                 'message' => 'Request updated',
-                'action_performed' => $data['status'] === 'approved' ? $request['action'] : null ]);
+                'decision' => $data['status'],  // <-- This tells you "approved" or "rejected"
+                'action_performed' => $data['status'] === 'approved' ? $request['action'] : null
+            ]);
         } 
         catch (Exception $e) {
             $this->sendErrorResponse($e->getMessage(), $e->getCode());
         }
     }
 
+    //works
     private function addProduct($productData, $requestData) {
         // Start transaction
         $this->connection->begin_transaction();
@@ -696,6 +701,7 @@ class ProductAPI {
         }
     }
 
+    //works- just have to figure out the whole ratings thing
     private function updateProduct($tyre_id, $productData, $user_id) 
     {
         $this->connection->begin_transaction();
@@ -748,7 +754,7 @@ class ProductAPI {
     }
 
 
-
+    //works
     private function removeProduct($tyre_id, $user_id) 
     {
         $this->connection->begin_transaction();
