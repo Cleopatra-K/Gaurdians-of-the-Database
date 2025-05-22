@@ -1,0 +1,44 @@
+Seller:
+
+  {
+    "type": "Register",
+    "username": "mafikizolo_tires",
+    "name": "Nomsa",
+    "surname": "Mafikizolo",
+    "email": "sales@mafikizolotires.co.za",
+    "phone_num": "+278345670",
+    "password_hashed": "Khaya@2023",
+    "role": "Seller",
+    "address": "45 Vilakazi St, Soweto",
+    "website": "https://mafikizolotires.co.za",
+    "business_reg_num": 2023119087
+}
+
+
+Admin:
+
+{
+    "type": "Register",
+    "username": "admin_za",
+    "name": "Teboho",
+    "email": "admin@tireshop.co.za",
+    "phone_num": "+271023458",
+    "password_hashed": "Admin@2023",
+    "role": "Admin",
+    "access_level": "Support"
+}
+
+
+
+
+Customer:
+{
+    "type": "Register",
+    "username": "sibusiso_c",
+    "name": "Sibusiso",
+    "surname": "Khumalo",
+    "email": "skhumalo@example.com",
+    "phone_num": "+278312345",
+    "password_hashed": "test123!223U",
+    "role": "Customer"
+}
