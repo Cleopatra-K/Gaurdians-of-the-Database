@@ -2,7 +2,7 @@
 type: Login
 expects:
     {
-        "type": "Login"
+        "type": "Login",
         "username": " ",
         "password": " "
     }
@@ -26,7 +26,7 @@ response (if valid):
 type: Register
 expects:
     {
-        "type": "Register"
+        "type": "Register",
         "username": "string",
         "name": "string",
         "surname": "string (required if role is Customer)",
@@ -62,7 +62,7 @@ type: GetAllProducts
 
 expects: 
     {
-        "type": "GetAllProducts"
+        "type": "GetAllProducts",
         "api_key": "abc123xyz"
     }
 
@@ -110,7 +110,7 @@ type: MakeRequest
 
 expects:
 {
-    "type": 'MakeRequest'
+    "type": "MakeRequest",
     "api_key": " ",
     "action": "add", 
     "product_data": {
@@ -146,9 +146,10 @@ NOTE: the product_data column cannot be null, so if a seller wants to remove a p
 
 5. handleShowRequest
 Description: This function will show all the requests in the requests table
-- show rejected- an admin should be able to see all the requests that were rejected
-- show approved- an admin should be able to see all approved requests
-- show pending and admin should be able to see all pending requests, and from the pending requests
+- show rejected=> an admin should be able to see all the requests that were rejected
+- show approved=> an admin should be able to see all approved requests
+- show pending and admin should be able to see all pending requests, decide whether they want to approve or deny. 
+To approve or reject, the handleEditRequest has to be called, so maybe have a JS function, that sends a request to that function.
 
 NOTE: only admins can see requests so, the api-key is checked to see if someone is an admin
 -The filters are approved, pending, rejected, all (and the kind of requests will be shown based on that)
@@ -191,19 +192,40 @@ response (if successful):
 }
 
 6. handleEditRequest
-Description:
+Description: The admin will handle the requests. 
+So if an admin approves a request, it will call either the addProduct, updateProduct or removeProduct functions.
+The response will tell you what decision was made so maybe you can use the response to notify the seller or something??
+
+expects:
+
+{
+    "type": "ProcessRequests",
+    "api_key": "",
+    "request_id": [value],
+    "status": "approved/ rejected"
+}
+
+response:
+
+{
+    "status": "success",
+    "message": "Request updated",
+    "decision": "approved",       // or "rejected"
+    "action_performed": "add"     // or "update", "remove", or null if rejected
+}
 
 
-
+NOTE: the addProduct, updateProduct and removeProducts functions will be called automatically, so don't stress
 7. addProduct
-Description:
+Description: this function will be what adds the product from the product_data into the products table
 
 8. updateProduct
-Description:
+Description: this function will be what updates the product in the products table
 
 
 9. removeProduct
-Description:
+Description: this function will be what removes a product from the products table
+
 
 
 10. morelickEvents
