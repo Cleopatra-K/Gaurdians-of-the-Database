@@ -6,7 +6,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-require 'db_connect.php'; 
+require 'config.php'; 
 
 
 $sellerRequests = $conn->query("SELECT * FROM requests ORDER BY request_date DESC");
