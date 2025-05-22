@@ -1,28 +1,28 @@
->> handleLogin
-    type: Login
-    expects:
-        {
-            "type": "Login"
+1. handleLogin
+type: Login
+expects:
+    {
+        "type": "Login"
+        "username": " ",
+        "password": " "
+    }
+
+response (if valid):
+    {
+        "success": true,
+        "user": {
+            "user_id": [value],
             "username": " ",
-            "password": " "
-        }
-
-    response (if valid):
-        {
-            "success": true,
-            "user": {
-                "user_id": [value],
-                "username": " ",
-                "name": " ",
-                "email": " ",
-                "phone_num": " ",
-                "role": " "
-            },
-            "api_key": " " 
-        }
+            "name": " ",
+            "email": " ",
+            "phone_num": " ",
+            "role": " "
+        },
+        "api_key": " " 
+    }
 
 
->> handleRegistration
+2. handleRegistration
 type: Register
 expects:
     {
@@ -54,7 +54,7 @@ returns (if valid):
     }
 
 
->> getAllProducts
+3. getAllProducts
 Description: this function gets all the products from the products table. Sellers can only see products relating to them.
 Customers and Admins can see all products.
 
@@ -83,7 +83,7 @@ returns:
         ]
     }
 
->> handleMakeRequest
+4. handleMakeRequest
 Description: the seller will make a request, that request will be added to the request table.
 
 More info: When the seller makes a request ie. on some form, they will have to provide all the details of a product if they are trying to get
@@ -134,22 +134,348 @@ returns:
 }
 
 
->> handleShowRequest
+5. handleShowRequest
 Description:
 
->> handleEditRequest
-Description:
-
-
-
->> addProduct
-Description:
-
->> updateProduct
+6. handleEditRequest
 Description:
 
 
->> removeProduct
+
+7. addProduct
 Description:
+
+8. updateProduct
+Description:
+
+
+9. removeProduct
+Description:
+
+
+10. morelickEvents
+type: Click
+
+expects: (JSON format)
+{
+    "type": "Click", //string
+    "api_key": "USER_API_KEY_" //string
+}
+
+returns: (JSON format)
+
+Success response:
+{
+    "message": "Click data retrieved successfully"
+    "data": [
+        // Array of click event objects, format depends on user role
+    ],
+    "status": "success",
+    "timestamp": UNIX_TIMESTAMP 
+}
+
+Error response:
+{
+    "status": "error",
+    "message": (e.g. 'Unauthorized access.', 'An error occurred while retrieving click data.')",
+    "timestamp": UNIX_TIMESTAMP
+}
+
+
+Success responses: 
+ADMIN:
+data array element:"
+[
+    {
+        "click_id": 1,
+        "customer_id": 1,
+        "tyre_id": 1,    
+        "clicked_at": "YYYY-MM-DD HH:MM:SS", 
+        "serial_num": "TYRE-SERIAL-NUMBER",  
+        "customer_username": "customer_user" 
+    },
+    {
+        "click_id": 2,
+        "customer_id": 4,
+        "tyre_id": 3,
+        "clicked_at": "YYYY-MM-DD HH:MM:SS",
+        "serial_num": "ANOTHER-SERIAL-NUMBER",
+        "customer_username": "another_customer"
+    }
+    ... & more
+]
+
+Seller:
+Success:
+[
+    {
+        "tyre_id": 1,         
+        "serial_num": "JKT-001-0001",
+        "original_price": 3255, 
+        "selling_price": 3255, 
+        "total_clicks": 5      
+    },
+    {
+        "tyre_id": 2,
+        "serial_num": "JKT-002-0078",
+        "original_price": 3406,
+        "selling_price": 3406,
+        "total_clicks": 10
+    }
+    ... & more
+]
+
+
+Customer:
+Error: --- Customers are not allowed to view click events".
+{
+    "status": "error",
+    "message": "Customers do not have access to click events.",
+    "timestamp": UNIX_TIMESTAMP
+}
+
+
+11. Tyre Listing 
+
+expects:
+{
+    "type": "getTyreListing", //S
+    "api_key": "API_KEY" //S ---------> OPTIONAL (no need for one if role == GUEST)
+}
+
+returns:
+
+{
+    "message": "Tyre listings retrieved successfully.",
+    "data": [
+        // Array of tyre listing objects, format depends on user role's view
+    ],
+    "status": "success",
+    "timestamp": Unix timestamp
+}
+
+Customer, Guest and Admin:
+Success:
+{
+    "message": "Tyre listings retrieved successfully.",
+    "data": [
+        {
+            "listing_id": 1,
+            "tyre_id": 1,
+            "original_price": "3255.00",
+            "selling_price": "3255.00",
+            "seller_user_id": 6,
+            "serial_num": "JKT-001-0001",
+            "rating_id": 5,
+            "seller_username": "tyreWorld",
+            "seller_email": "tyres@example.com"
+        },
+
+         {
+            "listing_id": 1,
+            "tyre_id": 1,
+            "original_price": "3255.00",
+            "selling_price": "3255.00",
+            "seller_user_id": 6,
+            "serial_num": "JKT-001-0001",
+            "rating_id": 5,
+            "seller_username": "wheelStore",
+            "seller_email": "wheelStore@example.com"
+        }
+
+        ... & more
+    ],
+    "status": "success",
+    "timestamp": 1716288005
+}
+
+Sellers (their own)
+{
+    "message": "Tyre listings retrieved successfully.",
+    "data": [
+        {
+            "listing_id": 1,
+            "tyre_id": 1,
+            "original_price": "3255.00",
+            "selling_price": "3255.00",
+            "seller_user_id": 6,
+            "serial_num": "JKT-001-0001",
+            "rating_id": 5,
+            "seller_username": "tyreWorld",
+            "seller_email": "tyres@example.com"
+        },
+
+         {
+            "listing_id": 1,
+            "tyre_id": 1,
+            "original_price": "3255.00",
+            "selling_price": "3255.00",
+            "seller_user_id": 6,
+            "serial_num": "JKT-001-0001",
+            "rating_id": 5,
+            "seller_username": "tyreWorld",
+            "seller_email": "tyres@example.com"
+        }
+
+        ... & more
+    ],
+    "status": "success",
+    "timestamp": 1716288005
+}
+
+
+12. getFAQ
+
+expects:
+{
+    "type": "getFAQ",
+    "api_key": "API_KEY" // It is optional but put for authenticated users
+}
+
+returns:
+{
+    "message": "FAQs retrieved successfully.",
+    "data": [
+        {
+            "FAQ_ID": 3,
+            "Question": "How long does shipping take?",
+            "Answer": "Shipping typically takes 3-5 business days for standard delivery, and 1-2 business days for express delivery."
+}
+],
+    "status": "success",
+    "timestamp": 1716288000
+}
+
+13. editFAQ
+
+expects:
+{
+    "type": "editFAQ",
+    "api_key": "YOUR_ADMIN_API_KEY_HERE", // Required and must be an admin's API key
+    "FAQ_ID": 1,                    
+    "Question": "How do I update my contact information?", // The new question text
+    "Answer": "You can update your contact information in your profile settings." // The new answer text
+}
+
+returns:
+{
+    "message": "FAQ updated successfully.",
+    "faq_id": 1,
+    "status": "success",
+    "timestamp": 1716288000
+}
+
+error:
+{
+    "status": "error",
+    "message": "Access Denied: Only Admins can edit FAQs.",
+    "timestamp": 1716288000
+}
+... & more
+
+14. addFavorite
+
+expects:
+{
+    "type": "addFavourite",
+    "api_key": "CUSTOMER_OR_SELLER_API_KEY",
+    "listing_id": 100
+}
+
+return:
+{
+    "message": "Tyre listing added to favourites successfully.",
+    "user_id": 5,
+    "listing_id": 456,
+    "status": "success",
+    "timestamp": 1716288000
+}
+
+
+15. removeFavourite
+
+excepts:
+{
+    "type": "removeFavourite",
+    "api_key": "CUSTOMER_OR_SELLER_API_KEY_HERE",
+    "listing_id": 456
+}
+
+returns:
+{
+    "message": "Tyre listing removed from favourites successfully.",
+    "user_id": 5,
+    "listing_id": 456,
+    "status": "success",
+    "timestamp": 1716288000
+}
+
+
+16. getFavourite
+
+excepts:
+{
+    "type": "getFavourites",
+    "api_key": "CUSTOMER_OR_SELLER_API_KEY_HERE"
+}
+
+{
+    "message": "Favourite tyre listings retrieved successfully.",
+    "data": [
+        {
+            "favourite_id": 1,
+            "listing_id": 123,
+            "created_at": "2025-05-21 11:30:00",
+            "tyre_id": 789,
+            "original_price": "4500.00",
+            "selling_price": "4200.00",
+            "serial_num": "ABC-123-DEF",
+            "seller_username": "wheeldeals",
+            "seller_email": "wheeldeals@mail.com"
+        },
+        {
+            "favourite_id": 2,
+            "listing_id": 456,
+            "created_at": "2025-05-20 10:15:30",
+            "tyre_id": 101,
+            "original_price": "3000.00",
+            "selling_price": "2800.00",
+            "serial_num": "XYZ-987-PQR",
+            "seller_username": "WheelDeals",
+            "seller_email": "WheelDeals@gmail.com"
+        }
+        // ... & more
+    ],
+    "status": "success",
+    "timestamp": 1716288000
+}
+
+17. getAllProducts
+Description: this function gets all the products from the products table. Customers cannnot see products. Sellers and Admins can see all products.
+type: GetAllProducts
+
+expects: 
+    {
+        "type": "GetAllProducts"
+        "api_key": "abc123xyz"
+    }
+
+returns:
+    {
+        "status": "success",
+        "count": 15,
+        "products": [
+            {
+            "tyre_id": [value],
+            "size": " ",
+            "load_index": [value],
+            "has_tube": [bool_value],
+            "generic_serial_num": " ",
+            "rating": [value],
+            "img_url": " "
+            },
+            // ... more products
+        ]
+    }
 
                    
