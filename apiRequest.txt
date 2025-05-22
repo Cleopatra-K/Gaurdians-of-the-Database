@@ -1,0 +1,143 @@
+>> handleLogin
+    type: Login
+    expects:
+        {
+            "type": "Login"
+            "username": " ",
+            "password": " "
+        }
+
+    response (if valid):
+        {
+            "success": true,
+            "user": {
+                "user_id": [value],
+                "username": " ",
+                "name": " ",
+                "email": " ",
+                "phone_num": " ",
+                "role": " "
+            },
+            "api_key": " " 
+        }
+
+
+>> handleRegistration
+type: Register
+expects:
+    {
+        "type": "Register"
+        "username": "string",
+        "name": "string",
+        "surname": "string (required if role is Customer)",
+        "email": "valid_email_format",
+        "phone_num": "string",
+        "password": "string (raw password)",
+        "role": "Customer | Seller | Admin",
+        
+        // Required only if role is 'Seller':
+        "address": "string",
+        "website": "string",
+        "business_reg_num": "string",
+
+        // Required only if role is 'Admin':
+        "access_level": "Support | Maintenance | Super Admin"
+    }
+
+returns (if valid):
+    {
+        "status": "success",
+        "message": "User registered successfully",
+        "api_key": "string",  // newly generated API key
+        "role": "Customer | Seller | Admin",
+        "timestamp": unix_timestamp
+    }
+
+
+>> getAllProducts
+Description: this function gets all the products from the products table. Customers cannnot see products. Sellers and Admins can see all products.
+type: GetAllProducts
+
+expects: 
+    {
+        "type": "GetAllProducts"
+        "api_key": "abc123xyz"
+    }
+
+returns:
+    {
+        "status": "success",
+        "count": 15,
+        "products": [
+            {
+            "tyre_id": [value],
+            "size": " ",
+            "load_index": [value],
+            "has_tube": [bool_value],
+            "generic_serial_num": " ",
+            "rating": [value],
+            "img_url": " "
+            },
+            // ... more products
+        ]
+    }
+
+>> handleMakeRequest
+Description: the seller will make a request, that request will be added to the request table.
+
+More info: When the seller makes a request ie. on some form, they will have to provide all the details of a product if they are trying to get
+those added to the products and tyre_listings tables. 
+Behind the scenes, the product_data will have to be sent to the GOTapi.php in JSON format, it will have to have all the info below.
+That product data will be stored in the product_data column (data type: text) in the requests table, another function will handle insertion.
+
+action: there are three actions => add, update, remove 
+
+type: MakeRequest
+
+
+expects:
+{
+    "type": 'MakeRequest'
+    "api_key": " ",
+    "action": "add", 
+    "product_data": {
+        "size": " ",
+        "load_index": [value],
+        "has_tube": [true/ false],
+        "generic_serial_num": " ",
+        "rating": [value],
+        "img_url": "https://example.com/tyre1.jpg",
+        "original_price": [value],
+        "selling_price": [value],
+        "serial_num": " "
+    },
+    "description": " "
+}
+
+returns:
+{
+  "status": "success",
+  "request_id": [value],
+  "message": " "
+}
+
+
+>> handleShowRequest
+Description:
+
+>> handleEditRequest
+Description:
+
+
+
+>> addProduct
+Description:
+
+>> updateProduct
+Description:
+
+
+>> removeProduct
+Description:
+
+                   
