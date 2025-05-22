@@ -37,9 +37,7 @@ class ProductAPI {
                 throw new Exception("Database connection failed: " . $this->connection->connect_error, 500);
             }
         }
-    
 
-    //works
 
         public function handleRequest() {
         $rawInput = file_get_contents('php://input');
@@ -101,16 +99,16 @@ class ProductAPI {
                     $this->handleEditRequest($data);
                     break;
                 case 'Click':
-                    $this->getClickEvent;
+                    //$this->getClickEvents;
 
-                    $user = $this->verifyApiKey($data[apikey] ?? '');
+                    $user = $this->verifyApiKey($data['apikey'] ?? '');
                     if (!$user){
                         $this->sendErrorResponse("Unauthorized: Invalid API key", 401);
                     }
                     $currentUserID = $user['user_id'];
-                    $currentUserType = $user['role'];
+                    $currentUserRole = $user['role'];
 
-                    $this->getClickEvents($currentUserId, $currentUserRole);
+                    $this->getClickEvents($currentUserID, $currentUserRole);
                     break;
                 case 'getFAQ':
                     if (!in_array($user['role'], ['Customer', 'Guest', 'Seller', 'Admin'])) {
@@ -119,7 +117,7 @@ class ProductAPI {
                     $this->getFAQ($user['user_id'], $user['role']);
                     break;
                 case 'editFAQ':
-                    if($user[role] !== 'Admin'){
+                    if($user['role'] !== 'Admin'){
                         $this->sendErrorResponse("Access Denied: Only Admins can edit FAQs.", 403);
                     }
                     if (empty($data['FAQ_ID']) || empty($data['Question']) || empty($data['Answer'])) {
@@ -143,7 +141,7 @@ class ProductAPI {
                     if (empty($data['listing_id'])) {
                         $this->sendErrorResponse("Missing required parameter for removing favourite: listing_id.", 400);
                     }
-                    $this->removeFavourite($user['user_id'], $data['listing_id']);
+                    $this->removeFavourites($user['user_id'], $data['listing_id']);
                     break;
                 case 'getFavourites':
                     if (!in_array($user['role'], ['Customer', 'Seller']) || $user['user_id'] === null) {
@@ -393,7 +391,7 @@ class ProductAPI {
         }
     }
 
-    
+    //works
     private function getAllProducts($data) {
         try {
             // 1. Verify API key exists
@@ -451,11 +449,10 @@ class ProductAPI {
     } 
     
 
-    //! the following functions are all functions related to handling the requests
+    //works
     private function handleMakeRequest($data) {
-        //make request- seller, will make a request and that will be added to the request table
         try {
-            // 1. Verify seller API key and get user_id
+            //verify seller API key and get user_id
             $stmt = $this->connection->prepare("SELECT user_id FROM users WHERE api_key = ? AND role = 'Seller'");
             $stmt->bind_param("s", $data['api_key']);
             $stmt->execute();
@@ -470,8 +467,8 @@ class ProductAPI {
 
             // 2. Validate request data
             $required = [
-                'action' => ['add', 'remove', 'update'], // What the seller wants to do
-                'product_data' => null // Will contain tyre details for add/update
+                'action' => ['add', 'remove', 'update'],
+                'product_data' => null
             ];
             
             foreach ($required as $field => $allowed) {
@@ -483,39 +480,44 @@ class ProductAPI {
                 }
             }
 
-            // 3. For remove or update actions, require tyre_id
-            if (in_array($data['action'], ['remove', 'update']) && empty($data['tyre_id'])) {
-                throw new Exception("tyre_id required for {$data['action']} requests", 400);
+            // 3. Validate tyre_id rules
+            if (in_array($data['action'], ['remove', 'update'])) {
+                if (empty($data['tyre_id'])) {
+                    throw new Exception("tyre_id required for {$data['action']} requests", 400);
+                }
+                $tyre_id = (int)$data['tyre_id'];
+            } else {
+                $tyre_id = null; // For 'add' action
             }
 
-            if ($data['action'] === 'add' && !empty($data['tyre_id'])) {
+            if ($data['action'] === 'add' && isset($data['tyre_id'])) {
                 throw new Exception("tyre_id should not be provided for add requests", 400);
             }
 
-            // Prepare all values for binding
-            $tyre_id = $data['tyre_id'] ?? null;
+            // Prepare values
             $description = $data['description'] ?? '';
             $product_data = json_encode($data['product_data']);
+            $status = 'Pending'; // Default status
             $action = $data['action'];
 
             // 4. Store the request
             $stmt = $this->connection->prepare("
-                    INSERT INTO requests 
-                    (user_id, tyre_id, description, status, request_date, product_data, action)
-                    VALUES (?, ?, ?, 'pending', NOW(), ?, ?)
-                ");
+                INSERT INTO requests 
+                (user_id, tyre_id, action, description, product_data, status, request_date)
+                VALUES (?, ?, ?, ?, ?, 'Pending', NOW())
+            ");
             
             $stmt->bind_param(
-                "iisss",
+                "iisss",  // Note: 6 parameters now
                 $user_id,
                 $tyre_id,
+                $action,
                 $description,
-                $product_data,
-                $action
+                $product_data
             );
             
             if (!$stmt->execute()) {
-                throw new Exception("Failed to submit request", 500);
+                throw new Exception("Failed to submit request: " . $stmt->error, 500);
             }
 
             $this->sendSuccessResponse([
@@ -889,7 +891,7 @@ class ProductAPI {
     //2 functions - getFAQ and editFAQ (admin)
 
     public function getFAQ(?int $currentUserID, string $currentUserRole){
-         $query = "SELECT FAQ_ID, Question, Answer FROM FAQ ORDER BY FAQ_ID ASC";
+        $query = "SELECT FAQ_ID, Question, Answer FROM FAQ ORDER BY FAQ_ID ASC";
 
         try {
             $stmt = $this->connection->prepare($query);
@@ -913,7 +915,7 @@ class ProductAPI {
         }
     }
 
-    public function editFAQ(int $faqId, string $question, string $answer): void
+    public function editFAQ(int $FAQ_ID, string $Question, string $Answer): void
     {
 
         $query = "UPDATE FAQ SET Question = ?, Answer = ? WHERE FAQ_ID = ?";
@@ -946,7 +948,7 @@ class ProductAPI {
         }
     }
 
-    public function addFavorite(int $userId, int $tyreId){
+    public function addFavourite(int $userId, int $tyreId){
     $checkTyreQuery = "SELECT COUNT(*) FROM products WHERE tyre_id = ?";
     $stmtCheck = $this->connection->prepare($checkTyreQuery);
     if ($stmtCheck === false) {
@@ -993,9 +995,7 @@ class ProductAPI {
         $this->sendErrorResponse("An error occurred while adding favourite.", $e->getCode() ?: 500);
     }
 }
-
-
-    public function removeFavorites(int $userId, int $tyreId){
+    public function removeFavourites(int $userId, int $tyreId){
     $query = "DELETE FROM favourites WHERE user_id = ? AND tyre_id = ?";
 
     try {
@@ -1114,6 +1114,5 @@ try {
         'timestamp' => time()
     ]);
     exit;
-}
-$api->handleRequest();
+}$api->handleRequest();
 ?>
