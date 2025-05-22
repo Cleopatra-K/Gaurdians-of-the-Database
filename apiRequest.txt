@@ -133,9 +133,62 @@ returns:
   "message": " "
 }
 
+NOTE: the product_data column cannot be null, so if a seller wants to remove a product, the product_data column should have an empty brace like below
+{
+    "type": "MakeRequest",
+    "api_key": " ",
+    "action": "remove",
+    "tyre_id": [value],
+    "description": " ",
+    "product_data": {}
+}
+
 
 5. handleShowRequest
-Description:
+Description: This function will show all the requests in the requests table
+- show rejected- an admin should be able to see all the requests that were rejected
+- show approved- an admin should be able to see all approved requests
+- show pending and admin should be able to see all pending requests, and from the pending requests
+
+NOTE: only admins can see requests so, the api-key is checked to see if someone is an admin
+-The filters are approved, pending, rejected, all (and the kind of requests will be shown based on that)
+
+expects:
+{
+    "type": "ShowRequests",
+    "api_key": " ",
+    "filter": "approved"
+}
+
+NOTE: the count is the number of responses in that section, you could use that if you wants
+response (if successful):
+{
+    "status": "success",
+    "filter": "approved",
+    "count": 2, 
+    "requests": [
+        {
+            "request_id": 12,
+            "user_id": 7,
+            "tyre_id": 101,
+            "action": "update",
+            "description": "Updated price and image for this model",
+            "product_data": {
+                "size": "225/70R19.5",
+                "load_index": 128,
+                "has_tube": false,
+                "serial_num": "GEN-R187-128",
+                "original_price": 249.99,
+                "selling_price": 229.99,
+                "img_url": "https://quicktyreprod.z1.web.core.windows.net/content/thumbs/bridgestoner187.png"
+            },
+            "status": "approved",
+            "request_date": "2025-05-21 14:10:00",
+            "username": "seller_mike"
+        },
+        // other requests....
+    ]
+}
 
 6. handleEditRequest
 Description:
@@ -235,94 +288,7 @@ Error: --- Customers are not allowed to view click events".
 }
 
 
-11. Tyre Listing 
-
-expects:
-{
-    "type": "getTyreListing", //S
-    "api_key": "API_KEY" //S ---------> OPTIONAL (no need for one if role == GUEST)
-}
-
-returns:
-
-{
-    "message": "Tyre listings retrieved successfully.",
-    "data": [
-        // Array of tyre listing objects, format depends on user role's view
-    ],
-    "status": "success",
-    "timestamp": Unix timestamp
-}
-
-Customer, Guest and Admin:
-Success:
-{
-    "message": "Tyre listings retrieved successfully.",
-    "data": [
-        {
-            "listing_id": 1,
-            "tyre_id": 1,
-            "original_price": "3255.00",
-            "selling_price": "3255.00",
-            "seller_user_id": 6,
-            "serial_num": "JKT-001-0001",
-            "rating_id": 5,
-            "seller_username": "tyreWorld",
-            "seller_email": "tyres@example.com"
-        },
-
-         {
-            "listing_id": 1,
-            "tyre_id": 1,
-            "original_price": "3255.00",
-            "selling_price": "3255.00",
-            "seller_user_id": 6,
-            "serial_num": "JKT-001-0001",
-            "rating_id": 5,
-            "seller_username": "wheelStore",
-            "seller_email": "wheelStore@example.com"
-        }
-
-        ... & more
-    ],
-    "status": "success",
-    "timestamp": 1716288005
-}
-
-Sellers (their own)
-{
-    "message": "Tyre listings retrieved successfully.",
-    "data": [
-        {
-            "listing_id": 1,
-            "tyre_id": 1,
-            "original_price": "3255.00",
-            "selling_price": "3255.00",
-            "seller_user_id": 6,
-            "serial_num": "JKT-001-0001",
-            "rating_id": 5,
-            "seller_username": "tyreWorld",
-            "seller_email": "tyres@example.com"
-        },
-
-         {
-            "listing_id": 1,
-            "tyre_id": 1,
-            "original_price": "3255.00",
-            "selling_price": "3255.00",
-            "seller_user_id": 6,
-            "serial_num": "JKT-001-0001",
-            "rating_id": 5,
-            "seller_username": "tyreWorld",
-            "seller_email": "tyres@example.com"
-        }
-
-        ... & more
-    ],
-    "status": "success",
-    "timestamp": 1716288005
-}
-
+//11 is missing
 
 12. getFAQ
 
