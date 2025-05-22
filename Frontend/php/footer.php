@@ -1,7 +1,7 @@
 <?php
 ?>
 <head>
-    <link rel="stylesheet" href="footer.css">
+    <link rel="stylesheet" href="css/footer.css">
 </head>
 <div class="theme-switcher">
     <button id="light-theme-btn">Light Theme</button>
