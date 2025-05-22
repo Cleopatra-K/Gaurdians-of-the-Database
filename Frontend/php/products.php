@@ -2,8 +2,7 @@
 
 <style>
     body {
-        background: url('../img/Peter Sagan cycling.jpg') no-repeat center center fixed;
-        background-size: cover;
+        background-color: white;
     }
 </style>
 
