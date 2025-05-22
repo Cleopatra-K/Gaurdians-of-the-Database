@@ -53,8 +53,52 @@ returns (if valid):
         "timestamp": unix_timestamp
     }
 
+3.5 getAllProducts (new version)
+Description: this function will use sessions to track a guest-users comparisons. A guest user can only make 3 comparisons, until they are prompted to log in.
+type: GetAllProducts
 
-3. getAllProducts
+
+expects (from a guest user=> no api key will be required):
+{  
+    "type": "GetAllProducts"
+}
+
+returns (if guest has remaining views):
+{
+    "status": "success",
+    "count": 42,
+    "products": [
+        {
+            "tyre_id": 1,
+            "size": "195/65R15",
+            "load_index": 91,
+            "has_tube": false,
+            "serial_num": "TYRE12345",
+            "rating": "A",
+            "img_url": "/images/tyre1.jpg"
+        },
+        // ... more products
+    ],
+    "requires_login": false,
+    "remaining_views": 2 // or "unlimited" for logged-in users
+}
+
+return (when their comparisons are finished):
+{
+    "status": "error",
+    "message": "Please log in to continue using the price comparison tool",
+    "requires_login": true,
+    "remaining_views": 0
+}
+
+
+NOTE: to reset sessions you will have to POST this in PostMan
+{
+    "type": "GetAllProducts",
+    "reset_session": true
+}
+
+3.5. getAllProducts (this was the old-version)
 Description: this function gets all the products from the products table. Sellers can only see products relating to them.
 Customers and Admins can see all products.
 
@@ -82,6 +126,9 @@ returns:
             // ... more products
         ]
     }
+
+
+
 
 4. handleMakeRequest
 Description: the seller will make a request, that request will be added to the request table.

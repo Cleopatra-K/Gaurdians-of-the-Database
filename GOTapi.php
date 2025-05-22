@@ -1,42 +1,84 @@
 
 <?php
-
+// Error reporting at the very top
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 
+// Session configuration - must come before any output
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_secure', 1); // Only enable if using HTTPS
+ini_set('session.use_strict_mode', 1);
 
+// Set session cookie parameters
+session_set_cookie_params([
+    'lifetime' => 86400, // 1 day
+    'path' => '/',
+    'domain' => $_SERVER['HTTP_HOST'], // Automatically uses current domain
+    'secure' => true,    // Enable only if using HTTPS
+    'httponly' => true,  // Prevent JavaScript access
+    'samesite' => 'Lax'  // Balances security and usability
+]);
+
+// Require your configuration
 require_once(__DIR__ . '/configuration/config.php');
 
+// CORS Handling
+$allowedOrigins = [
+    'https://www.your-real-domain.com', // Your production frontend
+    'http://localhost:3000',            // Common local dev port
+    'http://127.0.0.1:5500'             // Common Live Server port
+];
 
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+} else {
+    header("Access-Control-Allow-Origin: https://www.your-real-domain.com"); // Default
+}
+
+// Handle OPTIONS requests (pre-flight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header("HTTP/1.1 200 OK");
-    header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type");
+    header("Access-Control-Allow-Credentials: true");
     exit;
 }
 
+// Regular headers for all responses
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, GET"); //added GET for click events
+header("Access-Control-Allow-Methods: POST, GET");
 header("Access-Control-Allow-Headers: Content-Type");
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' ) {
-    // $api = new ProductAPI(); // instantiate to access the method
-    $api->sendErrorResponse('Method Not Allowed - Only POST requests are accepted', 405);
-    exit;
-}
+header("Access-Control-Allow-Credentials: true");
 
 class ProductAPI {
     private $connection;
 
-        public function __construct() {
-            $this->connection = Config::getInstance()->getConnection();
-            if ($this->connection->connect_error) {
-                throw new Exception("Database connection failed: " . $this->connection->connect_error, 500);
-            }
+    public function __construct() {
+        // Start session
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
+        
+        $this->connection = Config::getInstance()->getConnection();
+        if ($this->connection->connect_error) {
+            throw new Exception("Database connection failed: " . $this->connection->connect_error, 500);
+        }
+    }
+
+    //! this is temporary and strictly for testing getAllProducts with session- remove for final
+    public function resetSession() {
+        session_start();
+        session_destroy();
+        $this->sendSuccessResponse(['status' => 'session_reset']);
+    }
+
+        //To reset the session above type the below in Postman and POST
+        // {
+        // "type": "GetAllProducts",
+        // "reset_session": true
+        // }
 
 
         public function handleRequest() {
@@ -391,62 +433,145 @@ class ProductAPI {
         }
     }
 
-    //works
-    private function getAllProducts($data) {
+    //     // works
+    // private function getAllProducts($data) {
+    //     try {
+    //         // 1. Verify API key exists
+    //         if (!isset($data['api_key'])) {
+    //             throw new Exception("API key is required", 401);
+    //         }
+
+    //         // 2. Get user info including user_id and role
+    //         $stmt = $this->connection->prepare("
+    //             SELECT user_id, role FROM users WHERE api_key = ?
+    //         ");
+    //         $stmt->bind_param("s", $data['api_key']);
+    //         $stmt->execute();
+    //         $result = $stmt->get_result();
+
+    //         if ($result->num_rows === 0) {
+    //             throw new Exception("Invalid API key", 401);
+    //         }
+
+    //         $user = $result->fetch_assoc();
+    //         $user_id = $user['user_id'];
+    //         $role = $user['role'];
+
+    //         // 3. Prepare query based on role
+    //         $query = "SELECT p.* FROM products p";
+    //         $params = [];
+    //         $types = "";
+
+    //         if ($role === 'Seller') {
+    //             $query .= " WHERE p.user_id = ?";
+    //             $params[] = $user_id;
+    //             $types .= "i";
+    //         }
+    //         // Customers and Admins can see all products without filtering
+
+    //         // 4. Execute query
+    //         $stmt = $this->connection->prepare($query);
+    //         if (!empty($params)) {
+    //             $stmt->bind_param($types, ...$params);
+    //         }
+    //         $stmt->execute();
+    //         $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    //         // 5. Return response
+    //         $this->sendSuccessResponse([
+    //             'status' => 'success',
+    //             'count' => count($products),
+    //             'products' => $products,
+    //             'user_type' => $role // Optional: helps debugging
+    //         ]);
+
+    //     } catch (Exception $e) {
+    //         $this->sendErrorResponse($e->getMessage(), $e->getCode());
+    //     }
+    // } 
+
+    //get all products with a 3 products limit
+    public function getAllProducts($data) {
         try {
-            // 1. Verify API key exists
-            if (!isset($data['api_key'])) {
-                throw new Exception("API key is required", 401);
+
+            //! this session reset is strictly for testing remove for final, check the second function to see how to reset function in PostMan
+            if (isset($data['reset_session']) && $data['reset_session'] === true) {
+                session_destroy();
+                session_start();  // Start fresh session
+                $_SESSION = [];    // Clear all session data
             }
 
-            // 2. Get user info including user_id and role
+
+
+            // Check if user has API key (logged in user)
+            $validatedUser = null;
+            if (isset($data['api_key'])) {
+                $stmt = $this->connection->prepare("SELECT user_id, role FROM users WHERE api_key = ?");
+                $stmt->bind_param("s", $data['api_key']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                
+                if ($result->num_rows > 0) {
+                    $validatedUser = $result->fetch_assoc();
+                    // Reset guest view count if user logs in
+                    if (isset($_SESSION['guest_views'])) {
+                        unset($_SESSION['guest_views']);
+                    }
+                }
+            }
+
+            // For guests, check view count
+            if (!$validatedUser) {
+                // Initialize view count if not set
+                if (!isset($_SESSION['guest_views'])) {
+                    $_SESSION['guest_views'] = 0;
+                    $_SESSION['guest_first_view'] = time(); // Track first view time
+                }
+                
+                // Reset counter if it's a new day (optional)
+                if (time() - $_SESSION['guest_first_view'] > 86400) {
+                    $_SESSION['guest_views'] = 0;
+                    $_SESSION['guest_first_view'] = time();
+                }
+                
+                $_SESSION['guest_views']++;
+                
+                if ($_SESSION['guest_views'] > 3) {
+                    $this->sendErrorResponse(
+                        "Please log in to continue using the price comparison tool", 
+                        401, 
+                        [
+                            'requires_login' => true,
+                            'remaining_views' => 0
+                        ]
+                    );
+                    return;
+                }
+            }
+
+            // Get products
             $stmt = $this->connection->prepare("
-                SELECT user_id, role FROM users WHERE api_key = ?
+                SELECT tyre_id, size, load_index, has_tube, 
+                    serial_num, rating, img_url 
+                FROM products
             ");
-            $stmt->bind_param("s", $data['api_key']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            if ($result->num_rows === 0) {
-                throw new Exception("Invalid API key", 401);
-            }
-
-            $user = $result->fetch_assoc();
-            $user_id = $user['user_id'];
-            $role = $user['role'];
-
-            // 3. Prepare query based on role
-            $query = "SELECT p.* FROM products p";
-            $params = [];
-            $types = "";
-
-            if ($role === 'Seller') {
-                $query .= " WHERE p.user_id = ?";
-                $params[] = $user_id;
-                $types .= "i";
-            }
-            // Customers and Admins can see all products without filtering
-
-            // 4. Execute query
-            $stmt = $this->connection->prepare($query);
-            if (!empty($params)) {
-                $stmt->bind_param($types, ...$params);
-            }
             $stmt->execute();
             $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-            // 5. Return response
             $this->sendSuccessResponse([
                 'status' => 'success',
                 'count' => count($products),
                 'products' => $products,
-                'user_type' => $role // Optional: helps debugging
+                'requires_login' => false,
+                'remaining_views' => $validatedUser ? 'unlimited' : (3 - $_SESSION['guest_views'])
             ]);
 
         } catch (Exception $e) {
             $this->sendErrorResponse($e->getMessage(), $e->getCode());
         }
-    } 
+    }
+
+    
     
 
     //works
