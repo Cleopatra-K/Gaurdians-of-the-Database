@@ -1,7 +1,7 @@
 Seller:
 
   {
-    "type": "Register",
+    "api_key": 4faae2f89c87aff3de60d90ce2213596
     "username": "mafikizolo_tires",
     "name": "Nomsa",
     "surname": "Mafikizolo",
@@ -18,7 +18,7 @@ Seller:
 Admin:
 
 {
-    "type": "Register",
+    "api_key": 32873cc8b63f5237883cf77e7221ce03 
     "username": "admin_za",
     "name": "Teboho",
     "email": "admin@tireshop.co.za",
@@ -33,7 +33,7 @@ Admin:
 
 Customer:
 {
-    "type": "Register",
+    "api_key": 90c948f13d59f21e076933ca766f1fa8
     "username": "sibusiso_c",
     "name": "Sibusiso",
     "surname": "Khumalo",
