@@ -34,22 +34,57 @@ function validatorOfPassword(password) {
     return passwordR.test(password);
 }
 
-function displayErrors(errors, formId) {
-    let errorMsg = document.getElementById('error-messages');
 
-    if (!errorMsg) {
-        errorMsg = document.createElement('div');
-        errorMsg.id = 'error-messages';
-        errorMsg.style.color = 'red';
-        errorMsg.style.marginBottom = '15px';
-        errorMsg.style.padding = '10px';
-        errorMsg.style.border = '1px solid red';
-        errorMsg.style.backgroundColor = '#ffe0e0';
-        errorMsg.style.borderRadius = '5px';
-        document.getElementById(formId).prepend(errorMsg);
+function clearErrors(formId) {
+    let errorMsgElement;
+    if (formId === 'login-form') {
+        errorMsgElement = document.getElementById('login-error-messages');
+    } else {
+        errorMsgElement = document.getElementById('error-messages'); // For signup form
     }
 
-    errorMsg.innerHTML = errors.map(error => `<p>${error}</p>`).join('');
+    if (errorMsgElement) {
+        errorMsgElement.innerHTML = ''; // Clear content
+        errorMsgElement.style.display = 'none'; // **Hide the container when empty**
+    }
+}
+
+/**
+ * Displays error messages on the specified form and makes the container visible.
+ * @param {string[]} errors - An array of error strings to display.
+ * @param {string} formId - The ID of the form ('login-form' or 'signup-form').
+ */
+function displayErrors(errors, formId) {
+    let errorMsgElement;
+    if (formId === 'login-form') {
+        errorMsgElement = document.getElementById('login-error-messages');
+    } else {
+        errorMsgElement = document.getElementById('error-messages'); // For signup form
+    }
+
+    // If the div doesn't exist, create it dynamically
+    if (!errorMsgElement) {
+        errorMsgElement = document.createElement('div');
+        errorMsgElement.id = (formId === 'login-form') ? 'login-error-messages' : 'error-messages';
+        // Append it to the form
+        document.getElementById(formId).prepend(errorMsgElement);
+    }
+
+    // styles to ensure visibility and consistent appearance
+    errorMsgElement.style.color = '#d9534f';
+    errorMsgElement.style.backgroundColor = '#fce8e8';
+    errorMsgElement.style.border = '1px solid #d9534f';
+    errorMsgElement.style.padding = '10px';
+    errorMsgElement.style.marginTop = '10px';
+    errorMsgElement.style.marginBottom = '10px';
+    errorMsgElement.style.borderRadius = '5px';
+    errorMsgElement.style.textAlign = 'left';
+    errorMsgElement.style.fontSize = '0.9em';
+    errorMsgElement.style.fontFamily = 'Arial, sans-serif';
+    errorMsgElement.style.display = 'block'; // **Make it visible when displaying errors**
+
+    // Populate with error messages
+    errorMsgElement.innerHTML = errors.map(error => `<p>${error}</p>`).join('');
 }
 
 // Function to dynamically show/hide input fields based on the selected role
@@ -73,7 +108,7 @@ function toggleRoleSpecificFields() {
         }
         inputs.forEach(input => {
             input.removeAttribute('required'); // Remove required attribute
-            input.value = ''; // Clear value when hidden (good practice)
+            input.value = ''; // Clear value when hidden 
         });
     }
 
@@ -83,8 +118,7 @@ function toggleRoleSpecificFields() {
             sectionElement.classList.remove('hidden');
         }
         inputs.forEach(input => {
-            // Only add 'required' if the input element originally had it or needs it for the role
-            // We assume all inputs in these sections *should* be required by the backend
+    
             input.setAttribute('required', 'required'); 
         });
     }
@@ -246,10 +280,7 @@ function sendToAPI(userData) {
                 const apiMsg = data?.api_key || 'API key not available'; // Corrected to directly access api_key
 
                 messageBox.innerHTML = `
-                    <p><strong>${data.message || 'Registration successful!'}</strong></p>
-                    <p>Please copy your API key and keep it safe:</p>
-                    <code style="display: block; background-color: #f4f4f4; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-weight: bold; overflow-wrap: break-word;">${apiMsg}</code>
-                    <p style="color: red; font-size: 0.9em;">⚠️ This API key will not be shown again.</p>
+                    <p><strong>${data.message || 'Registration successful!'}</strong></p>    
                     <p>You will be redirected to the home page shortly.</p>
                 `;
                 
