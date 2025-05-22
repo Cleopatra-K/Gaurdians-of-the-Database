@@ -12,6 +12,5 @@
     <p>&copy; 2025 WheelDeal. All rights reserved.</p>
 </footer>
 <script src="js/footer.js" defer></script>
-<script src="js/accessibility.js" defer></script> 
 </body>
 </html>
