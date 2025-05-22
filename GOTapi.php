@@ -37,7 +37,7 @@ class ProductAPI {
                 throw new Exception("Database connection failed: " . $this->connection->connect_error, 500);
             }
         }
-    }
+    
 
     //works
 
@@ -1115,5 +1115,5 @@ try {
     ]);
     exit;
 }
-}$api->handleRequest();
+$api->handleRequest();
 ?>
