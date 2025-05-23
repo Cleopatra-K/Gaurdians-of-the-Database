@@ -1,81 +1,108 @@
-/*--CT kWENDA, U23547121*/
-body{
-    background-color: #f4e1e0;
-    text-align: center;
-    
-}
+body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 
+                       'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+                       sans-serif;
+            font-weight: 400;
+            line-height: 1.6;
+            color: #333;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f4f7f9;
+            cursor: pointer;
+        }
+        
+        /* Link Styling (remove underline) */
+        a {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* Home Button Container */
+        .home-button {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        /* Small Heading */
+        h1 {
+            font-family: 'Roboto Flex', sans-serif;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #1f2f40;
+        }
+        
+        /* Logo and Slogan Container */
+     /* Tight logo container */
+        .logo-container {
+            position: relative;
+            width: min(90vw, 600px); /* Constrain width */
+        }
+        
+        /* Logo with adjusted positioning */
+        #logo-img {
+            display: block;
+            width: 100%;
+            height: auto;
+            margin: 0 auto;
+            object-fit: contain;
+            transform: scale(1.1); /* Zoom in to reduce transparent space */
+            transform-origin: center;
+        }
+        
+        /* Slogan positioned directly on image */
+        .slogan {
+            position: absolute;
+            left: 0;
+            right: 0;
+            margin-top: 215px;
+            font-size: 0.9rem;
+            font-style: italic;
+            color: #2f95a7;
+            text-align: center;
+            padding: 0.5rem 0;
+            background-color: rgba(244, 247, 249, 0.7); /* Optional: slight bg for readability */
+        }
+        
+        /* Hover Effects */
+        .home-button:hover #logo-img img {
+            transform: scale(1.03);
+        }
+        
+        .home-button:active {
+            transform: scale(0.99);
+        }
 
-.header h1{
-    font-family: 'Playfair Display', serif;    
-    letter-spacing: -1px;
-    text-align: center;
-    margin-bottom: 0.225px ;
-    font-size: 25px;
-    word-break: break-word; 
-    white-space: nowrap; /* Ensures text doesn’t wrap unless needed */
-    overflow: hidden;
-    text-overflow: ellipsis; 
-}
-
-.header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 150px ;
-}
-
-#logo-img img {
-    width: 600px; /* Adjust size as needed */
-    height: auto;
-    margin-top: -200px; /* Moves the image up */
-}
-
-.slogan {
-    
-    margin-top: -300px; /* slogan position */
-}
-
-.prac-buttons {
-    margin-top: 20px; /* makes buttons have space below */
-}
-
-/*this takes out thos lines that werelinking my buttons*/
-a {
-    text-decoration: none; /* Removes underline */
-    display: inline-block; /* Ensures button shape stays intact */
-}
-
-.btn-style:hover{
-    background-color: #333; /* Darker contrast */
-    color: #eac9c1; /* Inverted text color */
-    transform: translateY(-3px); /* Slight lift effect */
-}
-
-.btn-style{
-    font-family: 'Playfair Display', serif;
-    font-size: 18px; /* Adjusted for readability */
-    font-weight: 500;
-    background-color: #eac9c1; /* Soft muted pink */
-    color: #333; 
-    border: 2px solid #333; /* Adds a classy border */
-    padding: 12px 24px; 
-    border-radius: 25px; /* Smooth rounded corners */
-    cursor: pointer;/*makes the hand pointer cursor*/
-    text-transform: uppercase; /* Makes text look cool */
-    transition: all 0.3s ease-in-out;
-    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1); /* Subtle depth so it gives shadow effect */
-}
-
-.hidden {
-    display: none;
-}
-
-/*img{
-    max-height: 500px;
-}*/
-
-/*.prac-buttons{
-    display: flex;
-    justify-content: center;
-    gap:5px;
-}*/
+        /* Hover message */
+        .hover-message {
+            position: absolute;
+            bottom: 20%;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #1f2f40;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 0.5rem;
+            border-radius: 4px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            width: max-content;
+            margin: 0 auto;
+        }
+        
+        .home-button:hover .hover-message {
+            opacity: 0.9;
+            transform: translateY(0);
+        }
+        /* #logo-img { border: 1px solid blue; }
+        .slogan { border: 1px solid green; } */
