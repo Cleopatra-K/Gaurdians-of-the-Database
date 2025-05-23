@@ -134,40 +134,38 @@ class ProductAPI {
                 case 'editFAQ':
                     if($user['role'] !== 'Admin'){
                         $this->sendErrorResponse("Access Denied: Only Admins can edit FAQs.", 403);
+                        break;
                     }
                     if (empty($data['FAQ_ID']) || empty($data['Question']) || empty($data['Answer'])) {
                         $this->sendErrorResponse("Missing required parameters for editing FAQ: Faq_id, Question, Answer.", 400);
                     }
-                    $this->editFAQ($data['FAQ_ID'], $data['Question'], $data['Answer']);
-                    break;
+                    // $this->editFAQ($data['FAQ_ID'], $data['Question'], $data['Answer']);
+                        $this->editFAQ($data['FAQ_ID'], $data['Question'], $data['Answer'], $user['user_id'], $user['role']);
+                        break;
                 case 'addFAQ':
-                    if ($user['role'] !== 'Admin') {
-                        $this->sendErrorResponse("Only Admins can add FAQs.", 401);
+                    if (!isset($data['Question'], $data['Answer'])) {
+                        $this->sendErrorResponse("Missing question or answer.", 400);
                     }
-
-                    if (empty($data['Question']) || empty($data['Answer'])) {
-                        $this->sendErrorResponse("Question and Answer are required.", 400);
-                    }
-
-                    $this->addFAQ($user['user_id'], $data['Question'], $data['Answer']);
+                    $this->addFAQ($user['user_id'], $user['role'], $data['Question'], $data['Answer']);
                     break;
-                case 'addFavourite':
-                    if (!in_array($user['role'], ['Customer', 'Seller']) || $user['user_id'] === null) {
-                        $this->sendErrorResponse("Access Denied: Only authenticated Customers and Sellers can add favourites.", 403);
+                case "addFavourite":
+                    if (!isset($data["tyre_id"])) {
+                        $this->sendErrorResponse("Missing required parameter for adding favourite: tyre_id.");
                     }
-                    if (empty($data['listing_id'])) {
-                        $this->sendErrorResponse("Missing required parameter for adding favourite: listing_id.", 400);
-                    }
-                    $this->addFavourite($user['user_id'], $data['listing_id']);
+                    $tyreId = intval($data["tyre_id"]);
+                    $this->addFavourite($user['user_id'], $tyreId);
                     break;
                 case 'removeFavourite':
                     if (!in_array($user['role'], ['Customer', 'Seller']) || $user['user_id'] === null) {
-                             $this->sendErrorResponse("Access Denied: Only authenticated Customers and Sellers can remove favourites.", 403);
+                        $this->sendErrorResponse("Access Denied: Only authenticated Customers and Sellers can remove favourites.", 403);
+                        return;
                     }
-                    if (empty($data['listing_id'])) {
-                        $this->sendErrorResponse("Missing required parameter for removing favourite: listing_id.", 400);
+                    if (empty($data['tyre_id'])) {
+                        $this->sendErrorResponse("Missing required parameter for removing favourite: tyre_id.", 400);
+                        return;
                     }
-                    $this->removeFavourite($user['user_id'], $data['listing_id']);
+                    $tyreId = intval($data['tyre_id']);
+                    $this->removeFavourite($user['user_id'], $tyreId);
                     break;
                 case 'getFavourites':
                     if (!in_array($user['role'], ['Customer', 'Seller']) || $user['user_id'] === null) {
@@ -962,48 +960,89 @@ class ProductAPI {
     }
 
     //works
-    public function editFAQ(int $FAQ_ID, string $Question, string $Answer): void
-    {
+    // public function editFAQ(int $FAQ_ID, string $Question, string $Answer): void
+    // {
 
-        $query = "UPDATE FAQ SET Question = ?, Answer = ? WHERE FAQ_ID = ?";
+    //     $query = "UPDATE FAQ SET Question = ?, Answer = ? WHERE FAQ_ID = ?";
 
-        try {
-            $stmt = $this->connection->prepare($query);
-            if ($stmt === false) {
-                throw new Exception("SQL prepare failed for edit FAQ: " . $this->connection->error, 500);
-            }
+    //     try {
+    //         $stmt = $this->connection->prepare($query);
+    //         if ($stmt === false) {
+    //             throw new Exception("SQL prepare failed for edit FAQ: " . $this->connection->error, 500);
+    //         }
 
-            $stmt->bind_param("ssi", $Question, $Answer, $FAQ_ID); 
+    //         $stmt->bind_param("ssi", $Question, $Answer, $FAQ_ID); 
 
-            if (!$stmt->execute()) {
-                throw new Exception("Failed to update FAQ: " . $stmt->error, 500);
-            }
+    //         if (!$stmt->execute()) {
+    //             throw new Exception("Failed to update FAQ: " . $stmt->error, 500);
+    //         }
 
-            if ($stmt->affected_rows === 0) {
-                $this->sendErrorResponse("FAQ with ID $FAQ_ID not found or no changes made.", 404);
-            } else {
-                $this->sendSuccessResponse([
-                    "message" => "FAQ updated successfully.",
-                    "faq_id" => $FAQ_ID
-                ]);
-            }
-            $stmt->close();
+    //         if ($stmt->affected_rows === 0) {
+    //             $this->sendErrorResponse("FAQ with ID $FAQ_ID not found or no changes made.", 404);
+    //         } else {
+    //             $this->sendSuccessResponse([
+    //                 "message" => "FAQ updated successfully.",
+    //                 "faq_id" => $FAQ_ID
+    //             ]);
+    //         }
+    //         $stmt->close();
 
-        } catch (Exception $e) {
-            error_log("Error editing FAQ: " . $e->getMessage());
-            // $this->sendErrorResponse("An error occurred while editing FAQ.", $e->getCode() ?: 500);
-            $this->sendErrorResponse([
-        "message" => "An error occurred while editing FAQ.",
-        "details" => $e->getMessage() 
-    ], $e->getCode() ?: 500);
-        }
+    //     } catch (Exception $e) {
+    //         error_log("Error editing FAQ: " . $e->getMessage());
+    //         $this->sendErrorResponse("An error occurred while editing FAQ.", $e->getCode() ?: 500);
+    //     }
+    // }
+
+    //works  - the difference between that previous one is that the userId is stored and updated according the changes made.  
+    // The Admin user ID who performed the update
+    public function editFAQ(int $FAQ_ID, string $Question, string $Answer, int $currentUserID, string $currentUserRole): void
+{
+    if ($currentUserRole !== 'Admin') {
+        $this->sendErrorResponse("Unauthorized to edit FAQ. Admins only.", 403);
+        return;
     }
 
+    $query = "UPDATE FAQ SET Question = ?, Answer = ?, user_id = ? WHERE FAQ_ID = ?";
 
-//     What is the warranty period for tyres?
-// Most tyres come with a 5-year warranty
-    public function addFAQ(int $user_id, string $question, string $answer): void
+    try {
+        $stmt = $this->connection->prepare($query);
+        if ($stmt === false) {
+            throw new Exception("SQL prepare failed for edit FAQ: " . $this->connection->error, 500);
+        }
+
+        $stmt->bind_param("ssii", $Question, $Answer, $currentUserID, $FAQ_ID);
+
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to update FAQ: " . $stmt->error, 500);
+        }
+
+        if ($stmt->affected_rows === 0) {
+            $this->sendErrorResponse("FAQ with ID $FAQ_ID not found or no changes made.", 404);
+        } else {
+            $this->sendSuccessResponse([
+                "message" => "FAQ updated successfully.",
+                "faq_id" => $FAQ_ID,
+                "user_id" => $currentUserID
+            ]);
+        }
+        $stmt->close();
+
+    } catch (Exception $e) {
+        error_log("Error editing FAQ: " . $e->getMessage());
+        $this->sendErrorResponse("An error occurred while editing FAQ.", $e->getCode() ?: 500);
+    }
+}
+
+
+    //works
+    public function addFAQ(int $user_id, string $user_role, string $question, string $answer): void
 {
+    // Only allow Admins to add FAQs
+    if ($user_role !== 'Admin') {
+        $this->sendErrorResponse("Unauthorized to add FAQ. Admins only.", 403);
+        return;
+    }
+
     $query = "INSERT INTO FAQ (user_id, Question, Answer) VALUES (?, ?, ?)";
 
     try {
@@ -1021,19 +1060,26 @@ class ProductAPI {
         $newFAQID = $stmt->insert_id;
 
         $this->sendSuccessResponse([
+            "status" => "success",
             "message" => "FAQ added successfully.",
-            "faq_id" => $newFAQID
+            "faq_id" => $newFAQID,
+            "user_id" => $user_id,
+            "timestamp" => time()
         ]);
 
         $stmt->close();
 
     } catch (Exception $e) {
         error_log("Error adding FAQ: " . $e->getMessage());
-        $this->sendErrorResponse("An error occurred while adding the FAQ.", $e->getCode() ?: 500);
+        $this->sendErrorResponse([
+            "message" => "An error occurred while adding the FAQ.",
+            "details" => $e->getMessage()
+        ], $e->getCode() ?: 500);
     }
 }
 
-    public function addFavourite(int $userId, int $tyreId){
+public function addFavourite(int $userId, int $tyreId){
+    // Check if tyre exists
     $checkTyreQuery = "SELECT COUNT(*) FROM products WHERE tyre_id = ?";
     $stmtCheck = $this->connection->prepare($checkTyreQuery);
     if ($stmtCheck === false) {
@@ -1050,12 +1096,12 @@ class ProductAPI {
         return;
     }
 
-    $query = "INSERT INTO favourites (user_id, tyre_id) VALUES (?, ?)";
+    $query = "INSERT INTO favourites (user_id, tyre_id, created_at) VALUES (?, ?, NOW())";
 
     try {
         $stmt = $this->connection->prepare($query);
         if ($stmt === false) {
-            throw new Exception("SQL prepare failed for addFavorite: " . $this->connection->error, 500);
+            throw new Exception("SQL prepare failed for addFavourite: " . $this->connection->error, 500);
         }
 
         $stmt->bind_param("ii", $userId, $tyreId);
@@ -1064,32 +1110,34 @@ class ProductAPI {
             if ($this->connection->errno == 1062) {
                 $this->sendErrorResponse("Tyre ID $tyreId is already in user's favourites.", 409);
             } else {
-                throw new Exception("Failed to add favourite: " . $stmt->error, 500);
+                $errorMsg = "Failed to add favourite: (" . $this->connection->errno . ") " . $stmt->error;
+                error_log($errorMsg);
+                $this->sendErrorResponse("An error occurred while adding favourite: " . $errorMsg, 500);
             }
         } else {
             $this->sendSuccessResponse([
                 "message" => "Tyre added to favourites successfully.",
                 "user_id" => $userId,
                 "tyre_id" => $tyreId
-            ], 201); 
+            ], 201);
         }
         $stmt->close();
 
     } catch (Exception $e) {
-        error_log("Error adding favourite: " . $e->getMessage());
         $this->sendErrorResponse("An error occurred while adding favourite.", $e->getCode() ?: 500);
     }
 }
 
-////////////////helllllllllllllllllllllllllllllllllloooooooooooooooooooooo///////////////
 
-    public function removeFavourites(int $userId, int $tyreId){
+////////////////helllllllllllllllllllllllllllllllllloooooooooooooooooooooo///////////////
+//works
+    public function removeFavourite(int $userId, int $tyreId) {
     $query = "DELETE FROM favourites WHERE user_id = ? AND tyre_id = ?";
 
     try {
         $stmt = $this->connection->prepare($query);
         if ($stmt === false) {
-            throw new Exception("SQL prepare failed for removeFavorite: " . $this->connection->error, 500);
+            throw new Exception("SQL prepare failed for removeFavourite: " . $this->connection->error, 500);
         }
 
         $stmt->bind_param("ii", $userId, $tyreId);
@@ -1104,19 +1152,21 @@ class ProductAPI {
             $this->sendSuccessResponse([
                 "message" => "Tyre removed from favourites successfully.",
                 "user_id" => $userId,
-                "tyre_id" => $tyreId
-            ]);
+                "tyre_id" => $tyreId,
+                "status" => "success",
+                "timestamp" => time()
+            ], 200);
         }
         $stmt->close();
 
     } catch (Exception $e) {
         error_log("Error removing favourite: " . $e->getMessage());
-        $this->sendErrorResponse("An error occurred while removing favourite.", $e->getCode() ?: 500);
+        $this->sendErrorResponse("An error occurred while removing favourite: " . $e->getMessage(), $e->getCode() ?: 500);
     }
 }
 
-
-    public function getFavourites(int $userId): void
+//works
+public function getFavourites(int $userId): void
 {
     $query = "
         SELECT
@@ -1159,6 +1209,14 @@ class ProductAPI {
         $favourites = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
 
+        if (empty($favourites)) {
+            $this->sendSuccessResponse([
+                "message" => "No favourite products found.",
+                "data" => []
+            ]);
+            return;
+        }
+
         $this->sendSuccessResponse([
             "message" => "Favourite products retrieved successfully.",
             "data" => $favourites
@@ -1169,6 +1227,7 @@ class ProductAPI {
         $this->sendErrorResponse("An error occurred while retrieving favourites.", $e->getCode() ?: 500);
     }
 }
+
 
 
     public function sendSuccessResponse($data, $statusCode = 200) {
