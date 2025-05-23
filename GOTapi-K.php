@@ -140,6 +140,17 @@ class ProductAPI {
                     }
                     $this->editFAQ($data['FAQ_ID'], $data['Question'], $data['Answer']);
                     break;
+                case 'addFAQ':
+                    if ($user['role'] !== 'Admin') {
+                        $this->sendErrorResponse("Only Admins can add FAQs.", 401);
+                    }
+
+                    if (empty($data['Question']) || empty($data['Answer'])) {
+                        $this->sendErrorResponse("Question and Answer are required.", 400);
+                    }
+
+                    $this->addFAQ($user['user_id'], $data['Question'], $data['Answer']);
+                    break;
                 case 'addFavourite':
                     if (!in_array($user['role'], ['Customer', 'Seller']) || $user['user_id'] === null) {
                         $this->sendErrorResponse("Access Denied: Only authenticated Customers and Sellers can add favourites.", 403);
@@ -922,8 +933,9 @@ class ProductAPI {
     */ 
 
 
-    //2 functions - getFAQ and editFAQ (admin)
+    //2 functions - getFAQ and editFAQ (editFAQ is allowed for admin)
 
+    //works 
     public function getFAQ(?int $currentUserID, string $currentUserRole){
          $query = "SELECT FAQ_ID, Question, Answer FROM FAQ ORDER BY FAQ_ID ASC";
 
@@ -949,7 +961,8 @@ class ProductAPI {
         }
     }
 
-    public function editFAQ(int $faqId, string $question, string $answer): void
+    //works
+    public function editFAQ(int $FAQ_ID, string $Question, string $Answer): void
     {
 
         $query = "UPDATE FAQ SET Question = ?, Answer = ? WHERE FAQ_ID = ?";
@@ -978,9 +991,47 @@ class ProductAPI {
 
         } catch (Exception $e) {
             error_log("Error editing FAQ: " . $e->getMessage());
-            $this->sendErrorResponse("An error occurred while editing FAQ.", $e->getCode() ?: 500);
+            // $this->sendErrorResponse("An error occurred while editing FAQ.", $e->getCode() ?: 500);
+            $this->sendErrorResponse([
+        "message" => "An error occurred while editing FAQ.",
+        "details" => $e->getMessage() 
+    ], $e->getCode() ?: 500);
         }
     }
+
+
+//     What is the warranty period for tyres?
+// Most tyres come with a 5-year warranty
+    public function addFAQ(int $user_id, string $question, string $answer): void
+{
+    $query = "INSERT INTO FAQ (user_id, Question, Answer) VALUES (?, ?, ?)";
+
+    try {
+        $stmt = $this->connection->prepare($query);
+        if ($stmt === false) {
+            throw new Exception("SQL prepare failed for add FAQ: " . $this->connection->error, 500);
+        }
+
+        $stmt->bind_param("iss", $user_id, $question, $answer);
+
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to add FAQ: " . $stmt->error, 500);
+        }
+
+        $newFAQID = $stmt->insert_id;
+
+        $this->sendSuccessResponse([
+            "message" => "FAQ added successfully.",
+            "faq_id" => $newFAQID
+        ]);
+
+        $stmt->close();
+
+    } catch (Exception $e) {
+        error_log("Error adding FAQ: " . $e->getMessage());
+        $this->sendErrorResponse("An error occurred while adding the FAQ.", $e->getCode() ?: 500);
+    }
+}
 
     public function addFavourite(int $userId, int $tyreId){
     $checkTyreQuery = "SELECT COUNT(*) FROM products WHERE tyre_id = ?";
