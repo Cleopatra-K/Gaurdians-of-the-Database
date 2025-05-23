@@ -53,7 +53,45 @@ returns (if valid):
         "timestamp": unix_timestamp
     }
 
-3.5 getAllProducts (new version)
+
+
+3. getAllProducts (this was the newer-version)
+Description: this function gets all the products from the products table. Sellers can only see products relating to them.
+Customers and Admins can see all products. And if someones is a guest, they can also view all the products, but you will have to implement limiting how many products they view.
+
+type: GetAllProducts
+
+expects (if the user is logged in): 
+    {
+        "type": "GetAllProducts",
+        "api_key": "abc123xyz"
+    }
+
+expects (if the user is not logged in): 
+    {
+        "type": "GetAllProducts",
+        "api_key": "abc123xyz"
+    }
+
+returns:
+    {
+        "status": "success",
+        "count": 15,
+        "products": [
+            {
+            "tyre_id": [value],
+            "size": " ",
+            "load_index": [value],
+            "has_tube": [bool_value],
+            "generic_serial_num": " ",
+            "img_url": " "
+            },
+            // ... more products
+        ]
+    }
+
+NOTE: optional commented out function, so do not have to implement    
+3.5 getAllProducts (cookie's version)
 Description: this function will use sessions to track a guest-users comparisons. A guest user can only make 3 comparisons, until they are prompted to log in.
 type: GetAllProducts
 
@@ -98,34 +136,8 @@ NOTE: to reset sessions you will have to POST this in PostMan
     "reset_session": true
 }
 
-3.5. getAllProducts (this was the old-version)
-Description: this function gets all the products from the products table. Sellers can only see products relating to them.
-Customers and Admins can see all products.
 
-type: GetAllProducts
 
-expects: 
-    {
-        "type": "GetAllProducts",
-        "api_key": "abc123xyz"
-    }
-
-returns:
-    {
-        "status": "success",
-        "count": 15,
-        "products": [
-            {
-            "tyre_id": [value],
-            "size": " ",
-            "load_index": [value],
-            "has_tube": [bool_value],
-            "generic_serial_num": " ",
-            "img_url": " "
-            },
-            // ... more products
-        ]
-    }
 
 
 
