@@ -1,0 +1,53 @@
+Gaurdians-of-the-Database
+├── Backend
+│   ├── apiRequest.txt
+│   └── GOTapi.php
+├── Documentation
+│   ├── cos 221 meeting notes 21 May .docx
+│   ├── GotD_final_rough_draft.pdf
+│   ├── README
+│   └── Step 1, 3, 5, 7 - Relational Mapping.png
+└── Frontend
+    ├── css
+    │   ├── admin.css
+    │   ├── footer.css
+    │   ├── home.css
+    │   ├── index.css
+    │   ├── price_compare.css
+    │   ├── products.css
+    │   ├── style.css
+    │   └── viewscss.css
+    ├── html
+    │   └── index.html
+    ├── img
+    │   ├── construction.png
+    │   ├── GTRADIAL_Champiro_VP1_3Q.webp
+    │   ├── GTRADIAL_Champiro_VP1_FR.webp
+    │   ├── GTRADIAL_Champiro_VP1_LH.webp
+    │   ├── HANKOOK_Kinergy_Eco_2_K435_3Q.webp
+    │   ├── HANKOOK_Kinergy_Eco_2_K435_FR.webp
+    │   ├── MICHELIN_Primacy_3_3Q.webp
+    │   ├── MICHELIN_Primacy_3_FR.webp
+    │   ├── MICHELIN_Primacy_3_LH.webp
+    │   ├── PIRELLI_Cinturato_P7_3Q.webp
+    │   ├── PIRELLI_Cinturato_P7_FR.webp
+    │   ├── PIRELLI_Cinturato_P7_LH.webp
+    │   ├── placeholder.jpg
+    │   ├── VELOCITYIMPORT_ROTA-ECO_3Q.webp
+    │   ├── VELOCITYIMPORT_ROTA-ECO_FR.webp
+    │   └── VELOCITYIMPORT_ROTA-ECO_LH.webp
+    ├── js
+    │   ├── filters.js
+    │   ├── footer.js
+    │   ├── home.js
+    │   ├── price_compare.js
+    │   └── products.js
+    └── php
+        ├── addtoHeader.php
+        ├── admin.php
+        ├── filters.php
+        ├── footer.php
+        ├── header.php
+        ├── index.php
+        ├── products.php
+        └── products.txt
