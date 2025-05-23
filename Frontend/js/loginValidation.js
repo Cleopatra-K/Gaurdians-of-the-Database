@@ -1,4 +1,3 @@
-// u23547121 CT Kwenda
 // for login form only
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -24,28 +23,57 @@ function validatorOfPassword(password) {
     return passwordR.test(password);
 }
 
-function displayErrors(errors, formId) {
-    let errorMsg = document.getElementById('error-messages'); // Default to global if not specific
+
+function clearErrors(formId) {
+    let errorMsgElement;
     if (formId === 'login-form') {
-        errorMsg = document.getElementById('login-error-messages'); // Use specific login error div
+        errorMsgElement = document.getElementById('login-error-messages');
+    } else {
+        errorMsgElement = document.getElementById('error-messages'); // For signup form
     }
 
-    if (!errorMsg) {
-        // If the div doesn't exist, create it dynamically
-        errorMsg = document.createElement('div');
-        errorMsg.id = (formId === 'login-form') ? 'login-error-messages' : 'error-messages';
-        // Add basic styling for visibility if not already in CSS
-        errorMsg.style.color = 'red';
-        errorMsg.style.backgroundColor = '#ffe0e0';
-        errorMsg.style.border = '1px solid red';
-        errorMsg.style.padding = '10px';
-        errorMsg.style.marginTop = '10px';
-        errorMsg.style.borderRadius = '5px';
-
-        document.getElementById(formId).prepend(errorMsg);
+    if (errorMsgElement) {
+        errorMsgElement.innerHTML = ''; // Clear content
+        errorMsgElement.style.display = 'none'; // **Hide the container when empty**
     }
-    // Clear previous errors and display new ones
-    errorMsg.innerHTML = errors.map(error => `<p>${error}</p>`).join('');
+}
+
+/**
+ * Displays error messages on the specified form and makes the container visible.
+ * @param {string[]} errors - An array of error strings to display.
+ * @param {string} formId - The ID of the form ('login-form' or 'signup-form').
+ */
+function displayErrors(errors, formId) {
+    let errorMsgElement;
+    if (formId === 'login-form') {
+        errorMsgElement = document.getElementById('login-error-messages');
+    } else {
+        errorMsgElement = document.getElementById('error-messages'); // For signup form
+    }
+
+    // If the div doesn't exist, create it dynamically
+    if (!errorMsgElement) {
+        errorMsgElement = document.createElement('div');
+        errorMsgElement.id = (formId === 'login-form') ? 'login-error-messages' : 'error-messages';
+        // Append it to the form
+        document.getElementById(formId).prepend(errorMsgElement);
+    }
+
+    // Always apply these styles to ensure visibility and consistent appearance
+    errorMsgElement.style.color = '#d9534f';
+    errorMsgElement.style.backgroundColor = '#fce8e8';
+    errorMsgElement.style.border = '1px solid #d9534f';
+    errorMsgElement.style.padding = '10px';
+    errorMsgElement.style.marginTop = '10px';
+    errorMsgElement.style.marginBottom = '10px';
+    errorMsgElement.style.borderRadius = '5px';
+    errorMsgElement.style.textAlign = 'left';
+    errorMsgElement.style.fontSize = '0.9em';
+    errorMsgElement.style.fontFamily = 'Arial, sans-serif';
+    errorMsgElement.style.display = 'block'; // **Make it visible when displaying errors**
+
+    // Populate with error messages
+    errorMsgElement.innerHTML = errors.map(error => `<p>${error}</p>`).join('');
 }
 
 function validateLoginF() {
@@ -55,9 +83,6 @@ function validateLoginF() {
 
     let errors = [];
 
-    // Assuming username is the primary identifier for login now, not email.
-    // If users can log in with email OR username, you'll need more complex logic.
-    // For now, aligning with handleLogin's `username = ?` SQL query.
     if (!username) {
         errors.push('Username is required.');
     } // No specific format validation for username unless your backend has one
@@ -107,7 +132,8 @@ function sendToAPILogin(username, password) { // Function now accepts username
                 throw new Error(errorData.message || 'Login failed with an unexpected error.');
             }).catch(() => {
                 // If backend sent non-JSON error (e.g., PHP Fatal error), throw generic error
-                throw new Error('Server error: Could not parse login response. Please check server logs.');
+                //throw new Error('Incorrect username or email. Please try again.');
+                throw new Error('Incorrect username or email. Please try again.');
             });
         }
         return response.json(); // Parse JSON if response is OK
@@ -115,7 +141,7 @@ function sendToAPILogin(username, password) { // Function now accepts username
     .then(data => {
         console.log("Login response:", data);
 
-        // Your PHP sends {"user": user_data, "api_key": api_key} on success
+        
         // Check for 'user' object to confirm success
         if (data && data.user) { 
             alert('Login successful!');
@@ -125,7 +151,6 @@ function sendToAPILogin(username, password) { // Function now accepts username
             localStorage.setItem('userName', data.user.name + ' ' + (data.user.surname || '')); // Surname might be optional
             localStorage.setItem('userRole', data.user.role); // Save role
 
-            // Redirect based on role (as per your existing signup.js logic)
             if (data.user.role === 'Seller') {
                 window.location.href = 'sellers.php';
             } else if (data.user.role === 'Customer') {
@@ -137,7 +162,6 @@ function sendToAPILogin(username, password) { // Function now accepts username
             }
 
         } else {
-            // If data.user is not present, it's a login failure message from backend
             // The PHP error handler should send 'message' on failure
             console.log("Login failed with message:", data.message);
             displayErrors([data.message || "Login failed. Please check your credentials."], 'login-form');
