@@ -433,128 +433,50 @@ class ProductAPI {
         }
     }
 
-    //     // works
-    // private function getAllProducts($data) {
-    //     try {
-    //         // 1. Verify API key exists
-    //         if (!isset($data['api_key'])) {
-    //             throw new Exception("API key is required", 401);
-    //         }
-
-    //         // 2. Get user info including user_id and role
-    //         $stmt = $this->connection->prepare("
-    //             SELECT user_id, role FROM users WHERE api_key = ?
-    //         ");
-    //         $stmt->bind_param("s", $data['api_key']);
-    //         $stmt->execute();
-    //         $result = $stmt->get_result();
-
-    //         if ($result->num_rows === 0) {
-    //             throw new Exception("Invalid API key", 401);
-    //         }
-
-    //         $user = $result->fetch_assoc();
-    //         $user_id = $user['user_id'];
-    //         $role = $user['role'];
-
-    //         // 3. Prepare query based on role
-    //         $query = "SELECT p.* FROM products p";
-    //         $params = [];
-    //         $types = "";
-
-    //         if ($role === 'Seller') {
-    //             $query .= " WHERE p.user_id = ?";
-    //             $params[] = $user_id;
-    //             $types .= "i";
-    //         }
-    //         // Customers and Admins can see all products without filtering
-
-    //         // 4. Execute query
-    //         $stmt = $this->connection->prepare($query);
-    //         if (!empty($params)) {
-    //             $stmt->bind_param($types, ...$params);
-    //         }
-    //         $stmt->execute();
-    //         $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-    //         // 5. Return response
-    //         $this->sendSuccessResponse([
-    //             'status' => 'success',
-    //             'count' => count($products),
-    //             'products' => $products,
-    //             'user_type' => $role // Optional: helps debugging
-    //         ]);
-
-    //     } catch (Exception $e) {
-    //         $this->sendErrorResponse($e->getMessage(), $e->getCode());
-    //     }
-    // } 
-
-    //get all products with a 3 products limit
-    public function getAllProducts($data) {
+        // works
+    private function getAllProducts($data) {
         try {
+            $role = null;
+            $user_id = null;
 
-            //! this session reset is strictly for testing remove for final, check the second function to see how to reset function in PostMan
-            if (isset($data['reset_session']) && $data['reset_session'] === true) {
-                session_destroy();
-                session_start();  // Start fresh session
-                $_SESSION = [];    // Clear all session data
-            }
-
-
-
-            // Check if user has API key (logged in user)
-            $validatedUser = null;
+            // 1. Optional API key validation
             if (isset($data['api_key'])) {
                 $stmt = $this->connection->prepare("SELECT user_id, role FROM users WHERE api_key = ?");
                 $stmt->bind_param("s", $data['api_key']);
                 $stmt->execute();
                 $result = $stmt->get_result();
-                
+
                 if ($result->num_rows > 0) {
-                    $validatedUser = $result->fetch_assoc();
-                    // Reset guest view count if user logs in
-                    if (isset($_SESSION['guest_views'])) {
-                        unset($_SESSION['guest_views']);
-                    }
+                    $user = $result->fetch_assoc();
+                    $role = $user['role'];
+                    $user_id = $user['user_id'];
                 }
             }
 
-            // For guests, check view count
-            if (!$validatedUser) {
-                // Initialize view count if not set
-                if (!isset($_SESSION['guest_views'])) {
-                    $_SESSION['guest_views'] = 0;
-                    $_SESSION['guest_first_view'] = time(); // Track first view time
-                }
-                
-                // Reset counter if it's a new day (optional)
-                if (time() - $_SESSION['guest_first_view'] > 86400) {
-                    $_SESSION['guest_views'] = 0;
-                    $_SESSION['guest_first_view'] = time();
-                }
-                
-                $_SESSION['guest_views']++;
-                
-                if ($_SESSION['guest_views'] > 3) {
-                    $this->sendErrorResponse(
-                        "Please log in to continue using the price comparison tool", 
-                        401, 
-                        [
-                            'requires_login' => true,
-                            'remaining_views' => 0
-                        ]
-                    );
-                    return;
-                }
+            // 2. Construct SQL query
+            $query = "
+                                SELECT 
+                    p.tyre_id, p.size, p.load_index, p.has_tube, 
+                    p.serial_num, p.rating, p.img_url, 
+                    u.name AS seller_name
+                FROM products p
+                JOIN users u ON p.user_id = u.user_id ";
+            $params = [];
+            $types = "";
+
+            // If role is 'Seller', filter products by user_id
+            if ($role === 'Seller') {
+                $query .= " WHERE p.user_id = ?";
+                $params[] = $user_id;
+                $types .= "i";
             }
 
-            // Get products
-            $stmt = $this->connection->prepare("
-                SELECT tyre_id, size, load_index, has_tube, 
-                    serial_num, rating, img_url 
-                FROM products
-            ");
+            $stmt = $this->connection->prepare($query);
+            if (!empty($params)) {
+                $stmt->bind_param($types, ...$params);
+            }
+
+            // 3. Execute and return results
             $stmt->execute();
             $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
@@ -562,8 +484,7 @@ class ProductAPI {
                 'status' => 'success',
                 'count' => count($products),
                 'products' => $products,
-                'requires_login' => false,
-                'remaining_views' => $validatedUser ? 'unlimited' : (3 - $_SESSION['guest_views'])
+                'requires_login' => false
             ]);
 
         } catch (Exception $e) {
@@ -571,9 +492,89 @@ class ProductAPI {
         }
     }
 
-    
-    
 
+    //get all products with a 3 products limit
+    // public function getAllProducts($data) {
+    //     try {
+
+    //         //! this session reset is strictly for testing remove for final, check the second function to see how to reset function in PostMan
+    //         if (isset($data['reset_session']) && $data['reset_session'] === true) {
+    //             session_destroy();
+    //             session_start();  // Start fresh session
+    //             $_SESSION = [];    // Clear all session data
+    //         }
+
+
+
+    //         // Check if user has API key (logged in user)
+    //         $validatedUser = null;
+    //         if (isset($data['api_key'])) {
+    //             $stmt = $this->connection->prepare("SELECT user_id, role FROM users WHERE api_key = ?");
+    //             $stmt->bind_param("s", $data['api_key']);
+    //             $stmt->execute();
+    //             $result = $stmt->get_result();
+                
+    //             if ($result->num_rows > 0) {
+    //                 $validatedUser = $result->fetch_assoc();
+    //                 // Reset guest view count if user logs in
+    //                 if (isset($_SESSION['guest_views'])) {
+    //                     unset($_SESSION['guest_views']);
+    //                 }
+    //             }
+    //         }
+
+    //         // For guests, check view count
+    //         if (!$validatedUser) {
+    //             // Initialize view count if not set
+    //             if (!isset($_SESSION['guest_views'])) {
+    //                 $_SESSION['guest_views'] = 0;
+    //                 $_SESSION['guest_first_view'] = time(); // Track first view time
+    //             }
+                
+    //             // Reset counter if it's a new day (optional)
+    //             if (time() - $_SESSION['guest_first_view'] > 86400) {
+    //                 $_SESSION['guest_views'] = 0;
+    //                 $_SESSION['guest_first_view'] = time();
+    //             }
+                
+    //             $_SESSION['guest_views']++;
+                
+    //             if ($_SESSION['guest_views'] > 3) {
+    //                 $this->sendErrorResponse(
+    //                     "Please log in to continue using the price comparison tool", 
+    //                     401, 
+    //                     [
+    //                         'requires_login' => true,
+    //                         'remaining_views' => 0
+    //                     ]
+    //                 );
+    //                 return;
+    //             }
+    //         }
+
+    //         // Get products
+    //         $stmt = $this->connection->prepare("
+    //             SELECT tyre_id, size, load_index, has_tube, 
+    //                 serial_num, rating, img_url 
+    //             FROM products
+    //         ");
+    //         $stmt->execute();
+    //         $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    //         $this->sendSuccessResponse([
+    //             'status' => 'success',
+    //             'count' => count($products),
+    //             'products' => $products,
+    //             'requires_login' => false,
+    //             'remaining_views' => $validatedUser ? 'unlimited' : (3 - $_SESSION['guest_views'])
+    //         ]);
+
+    //     } catch (Exception $e) {
+    //         $this->sendErrorResponse($e->getMessage(), $e->getCode());
+    //     }
+    // }
+
+    
     //works
     private function handleMakeRequest($data) {
         try {
