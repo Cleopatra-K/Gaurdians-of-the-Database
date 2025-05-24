@@ -554,7 +554,7 @@ class ProductAPI {
                     u.name as seller_name,
                     u.role as seller_role
                 FROM products p
-                JOIN users u ON p.user_id = u.user_id
+                LEFT JOIN users u ON p.user_id = u.user_id
                 GROUP BY p.tyre_id
             ";
             
