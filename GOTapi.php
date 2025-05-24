@@ -429,7 +429,7 @@ class ProductAPI {
                         $stmt = $this->connection->prepare("INSERT INTO sellers 
                             (user_id, address, website, business_reg_num) 
                             VALUES (?, ?, ?, ?)");
-                        $stmt->bind_param("issi", 
+                        $stmt->bind_param("isss", 
                             $user_id, 
                             $data['address'],
                             $data['website'],
