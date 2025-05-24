@@ -1,5 +1,6 @@
 
 <?php
+
 // Error reporting at the very top
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -20,8 +21,8 @@ session_set_cookie_params([
     'samesite' => 'Lax'  // Balances security and usability
 ]);
 
-// Require your configuration
 require_once(__DIR__ . '/configuration/config.php');
+
 
 // CORS Handling
 $allowedOrigins = [
@@ -30,12 +31,15 @@ $allowedOrigins = [
     'http://127.0.0.1:5500'             // Common Live Server port
 ];
 
+
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
-} else {
+} 
+else {
     header("Access-Control-Allow-Origin: https://www.your-real-domain.com"); // Default
 }
+
 
 // Handle OPTIONS requests (pre-flight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -52,27 +56,35 @@ header("Access-Control-Allow-Methods: POST, GET");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
 
+
+// if ($_SERVER['REQUEST_METHOD'] !== 'POST' ) {
+//     $api = new ProductAPI(); // instantiate to access the method
+//     $api->sendErrorResponse('Method Not Allowed - Only POST requests are accepted', 405);
+//     exit;
+// }
+
 class ProductAPI {
     private $connection;
 
-    public function __construct() {
-        // Start session
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        
-        $this->connection = Config::getInstance()->getConnection();
-        if ($this->connection->connect_error) {
-            throw new Exception("Database connection failed: " . $this->connection->connect_error, 500);
-        }
-    }
+        public function __construct() {
 
-    //! this is temporary and strictly for testing getAllProducts with session- remove for final
-    public function resetSession() {
-        session_start();
-        session_destroy();
-        $this->sendSuccessResponse(['status' => 'session_reset']);
-    }
+            // Start session
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $this->connection = Config::getInstance()->getConnection();
+            if ($this->connection->connect_error) {
+                throw new Exception("Database connection failed: " . $this->connection->connect_error, 500);
+            }
+        }
+
+        //! this is temporary and strictly for testing getAllProducts with session- remove for final
+        public function resetSession() {
+            session_start();
+            session_destroy();
+            $this->sendSuccessResponse(['status' => 'session_reset']);
+        }
 
         //To reset the session above type the below in Postman and POST
         // {
@@ -108,7 +120,7 @@ class ProductAPI {
        $user = ['user_id' => null, 'role' => 'Guest']; //user with no api key
 
         //if api is given - verify it
-         if (isset($data['api_key'])) {
+        if (isset($data['api_key'])) {
             $verifiedUser = $this->verifyApiKey($data['api_key']);
             if ($verifiedUser) {
                 $user = $verifiedUser; 
@@ -141,16 +153,32 @@ class ProductAPI {
                     $this->handleEditRequest($data);
                     break;
                 case 'Click':
-                    //$this->getClickEvents;
-
-                    $user = $this->verifyApiKey($data['apikey'] ?? '');
+                    $user = $this->verifyApiKey($data['apikey'] ?? $data['api_key'] ?? '');
                     if (!$user){
                         $this->sendErrorResponse("Unauthorized: Invalid API key", 401);
+                        return;
                     }
+
                     $currentUserID = $user['user_id'];
                     $currentUserRole = $user['role'];
-
                     $this->getClickEvents($currentUserID, $currentUserRole);
+                    break;
+                case 'TrackClick':
+                    $user = $this->verifyApiKey($data['apikey'] ?? '');
+                    if (!$user) {
+                        $this->sendErrorResponse("Unauthorized: Invalid API key", 401);
+                        return;
+                    }
+
+                    $userID = $user['user_id'];
+                    $tyreID = (int)($data['tyre_id'] ?? 0);
+
+                    if (!$tyreID) {
+                        $this->sendErrorResponse("Missing tyre_id", 400);
+                        return;
+                    }
+
+                    $this->trackClick($userID, $tyreID);
                     break;
                 case 'getFAQ':
                     if (!in_array($user['role'], ['Customer', 'Guest', 'Seller', 'Admin'])) {
@@ -161,29 +189,38 @@ class ProductAPI {
                 case 'editFAQ':
                     if($user['role'] !== 'Admin'){
                         $this->sendErrorResponse("Access Denied: Only Admins can edit FAQs.", 403);
+                        break;
                     }
                     if (empty($data['FAQ_ID']) || empty($data['Question']) || empty($data['Answer'])) {
                         $this->sendErrorResponse("Missing required parameters for editing FAQ: Faq_id, Question, Answer.", 400);
                     }
-                    $this->editFAQ($data['FAQ_ID'], $data['Question'], $data['Answer']);
+                    // $this->editFAQ($data['FAQ_ID'], $data['Question'], $data['Answer']);
+                        $this->editFAQ($data['FAQ_ID'], $data['Question'], $data['Answer'], $user['user_id'], $user['role']);
+                        break;
+                case 'addFAQ':
+                    if (!isset($data['Question'], $data['Answer'])) {
+                        $this->sendErrorResponse("Missing question or answer.", 400);
+                    }
+                    $this->addFAQ($user['user_id'], $user['role'], $data['Question'], $data['Answer']);
                     break;
-                case 'addFavourite':
-                    if (!in_array($user['role'], ['Customer', 'Seller']) || $user['user_id'] === null) {
-                        $this->sendErrorResponse("Access Denied: Only authenticated Customers and Sellers can add favourites.", 403);
+                case "addFavourite":
+                    if (!isset($data["tyre_id"])) {
+                        $this->sendErrorResponse("Missing required parameter for adding favourite: tyre_id.");
                     }
-                    if (empty($data['listing_id'])) {
-                        $this->sendErrorResponse("Missing required parameter for adding favourite: listing_id.", 400);
-                    }
-                    $this->addFavourite($user['user_id'], $data['listing_id']);
+                    $tyreId = intval($data["tyre_id"]);
+                    $this->addFavourite($user['user_id'], $tyreId);
                     break;
-                case 'removeFavorite':
+                case 'removeFavourite':
                     if (!in_array($user['role'], ['Customer', 'Seller']) || $user['user_id'] === null) {
-                             $this->sendErrorResponse("Access Denied: Only authenticated Customers and Sellers can remove favourites.", 403);
+                        $this->sendErrorResponse("Access Denied: Only authenticated Customers and Sellers can remove favourites.", 403);
+                        return;
                     }
-                    if (empty($data['listing_id'])) {
-                        $this->sendErrorResponse("Missing required parameter for removing favourite: listing_id.", 400);
+                    if (empty($data['tyre_id'])) {
+                        $this->sendErrorResponse("Missing required parameter for removing favourite: tyre_id.", 400);
+                        return;
                     }
-                    $this->removeFavourites($user['user_id'], $data['listing_id']);
+                    $tyreId = intval($data['tyre_id']);
+                    $this->removeFavourite($user['user_id'], $tyreId);
                     break;
                 case 'getFavourites':
                     if (!in_array($user['role'], ['Customer', 'Seller']) || $user['user_id'] === null) {
@@ -227,7 +264,7 @@ class ProductAPI {
         }
     }
 
-    //works
+     //works
     private function handleLogin($data)
     {
         $stmt = $this->connection->prepare('SELECT user_id, username, name, email, phone_num, role, password_hashed, salt, api_key FROM users WHERE username = ?');
@@ -256,7 +293,6 @@ class ProductAPI {
             $this->sendErrorResponse("Invalid credentials, no user", 401);
         }
     }
-
 
     //works
     private function handleRegistration($data) {
@@ -433,7 +469,8 @@ class ProductAPI {
         }
     }
 
-        // works
+    
+    // works
     private function getAllProducts($data) {
         try {
             $role = null;
@@ -572,9 +609,9 @@ class ProductAPI {
     //     } catch (Exception $e) {
     //         $this->sendErrorResponse($e->getMessage(), $e->getCode());
     //     }
-    // }
-
+    // } 
     
+
     //works
     private function handleMakeRequest($data) {
         try {
@@ -880,6 +917,7 @@ class ProductAPI {
     }
 
 
+
     //works
     private function removeProduct($tyre_id, $user_id) 
     {
@@ -908,110 +946,132 @@ class ProductAPI {
     }
 
 
+    //works
+    function trackClick(int $userID, int $tyreID): void {
+        try {
+            $stmt = $this->connection->prepare("
+                INSERT INTO click_events (user_id, tyre_id, clicked_at)
+                VALUES (?, ?, NOW())
+            ");
 
-    function getClickEvents(int $currentUserID, string $currentUserRole){
-    $query = "";
-    $paramTypes = "";
-    $paramValues = [];
-
-    switch($currentUserRole){
-        case 'Admin':
-            // Admin sees all clicks
-            $query = "
-                SELECT 
-                    ce.click_id,
-                    ce.user_id AS customer_id,
-                    ce.tyre_id,
-                    ce.clicked_at,
-                    p.serial_num,
-                    p.original_price,
-                    p.selling_price,
-                    p.rating,
-                    p.size,
-                    p.load_index,
-                    p.has_tube,
-                    p.img_url
-                FROM 
-                    click_events ce
-                JOIN
-                    products p ON ce.tyre_id = p.tyre_id
-                LEFT JOIN 
-                    users u ON ce.user_id = u.user_id AND u.role = 'Customer'
-                ORDER BY
-                    ce.clicked_at DESC
-            ";
-            break;
-
-        case 'Seller':
-            // Seller sees clicks on their own products
-            $query = "
-                SELECT
-                    p.tyre_id,
-                    p.serial_num,
-                    p.original_price,
-                    p.selling_price,
-                    p.rating,
-                    p.size,
-                    p.load_index,
-                    p.has_tube,
-                    p.img_url,
-                    COUNT(ce.click_id) AS total_clicks
-                FROM
-                    products p
-                JOIN
-                    users u ON p.user_id = u.user_id 
-                LEFT JOIN
-                    click_events ce ON p.tyre_id = ce.tyre_id
-                WHERE
-                    u.user_id = ? AND u.role = 'Seller'
-                GROUP BY
-                    p.tyre_id, p.serial_num, p.original_price, p.selling_price,
-                    p.rating, p.size, p.load_index, p.has_tube, p.img_url
-                ORDER BY
-                    total_clicks DESC
-            ";
-            $paramTypes = "i";
-            $paramValues = [$currentUserID];
-            break;
-
-        case 'Customer':
-            $this->sendErrorResponse("Customers do not have access to this.", 403);
-            return;
-
-        default:
-            $this->sendErrorResponse("Unauthorized access.", 401);
-            return;
-    }
-
-    try {
-        $stmt = $this->connection->prepare($query);
-        if ($stmt === false) {
-            throw new Exception("SQL prepare failed for getClickEvents: " . $this->connection->error, 500);
-        }
-
-        if (!empty($paramTypes)) {
-            $refs = [];
-            foreach ($paramValues as $key => $value) {
-                $refs[$key] = &$paramValues[$key];
+            if (!$stmt) {
+                throw new Exception("Failed to prepare click insert: " . $this->connection->error);
             }
-            call_user_func_array([$stmt, 'bind_param'], array_merge([$paramTypes], $refs));
+
+            $stmt->bind_param("ii", $userID, $tyreID);
+            $stmt->execute();
+            $stmt->close();
+
+            $this->sendSuccessResponse(["message" => "Click tracked successfully."]);
+        } catch (Exception $e) {
+            error_log("Click tracking error: " . $e->getMessage());
+            $this->sendErrorResponse("Failed to track click.", $e->getCode() ?: 500);
+        }
+    }
+
+    //works
+    function getClickEvents(int $currentUserID, string $currentUserRole){
+        $query = "";
+        $paramTypes = "";
+        $paramValues = [];
+
+        switch($currentUserRole){
+            case 'Admin':
+                // Admin sees all clicks
+                $query = "
+                    SELECT 
+                        ce.click_id,
+                        ce.user_id AS customer_id,
+                        ce.tyre_id,
+                        ce.clicked_at,
+                        p.serial_num,
+                        p.original_price,
+                        p.selling_price,
+                        p.rating,
+                        p.size,
+                        p.load_index,
+                        p.has_tube,
+                        p.img_url,
+                        u.username AS customer_username
+                    FROM 
+                        click_events ce
+                    JOIN
+                        products p ON ce.tyre_id = p.tyre_id
+                    LEFT JOIN 
+                        users u ON ce.user_id = u.user_id AND u.role = 'Customer'
+                    ORDER BY
+                        ce.clicked_at ASC
+                ";
+                break;
+
+            case 'Seller':
+                    $query = "
+                    SELECT
+                        p.tyre_id,
+                        p.serial_num,
+                        p.original_price,
+                        p.selling_price,
+                        p.rating,
+                        p.size,
+                        p.load_index,
+                        p.has_tube,
+                        p.img_url,
+                        COUNT(ce.click_id) AS total_clicks
+                    FROM
+                        products p
+                    LEFT JOIN
+                        click_events ce ON p.tyre_id = ce.tyre_id
+                    WHERE
+                        p.user_id = ?
+                    GROUP BY
+                        p.tyre_id, p.serial_num, p.original_price, p.selling_price,
+                        p.rating, p.size, p.load_index, p.has_tube, p.img_url
+                    ORDER BY
+                        total_clicks ASC
+                    ";
+                    $paramTypes = "i";
+                    $paramValues = [$currentUserID];
+                    break;
+
+            case 'Customer':
+                $this->sendErrorResponse("Customers do not have access to this.", 403);
+                return;
+
+            default:
+                $this->sendErrorResponse("Unauthorized access.", 401);
+                return;
         }
 
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $clickData = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
+        try {
+            $stmt = $this->connection->prepare($query);
+            if ($stmt === false) {
+                throw new Exception("SQL prepare failed for getClickEvents: " . $this->connection->error, 500);
+            }
 
-        $this->sendSuccessResponse([
-            "message" => "Click data retrieved successfully.",
-            "data" => $clickData
-        ]);
+            if (!empty($paramTypes)) {
+                $refs = [];
+                foreach ($paramValues as $key => $value) {
+                    $refs[$key] = &$paramValues[$key];
+                }
+                call_user_func_array([$stmt, 'bind_param'], array_merge([$paramTypes], $refs));
+            }
 
-    } catch (Exception $e) {
-        error_log("Error retrieving click data: " . $e->getMessage());
-        $this->sendErrorResponse("An error occurred while retrieving click data.", $e->getCode() ?: 500);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $clickData = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+
+            $this->sendSuccessResponse([
+                "message" => "Click data retrieved successfully.",
+                "data" => $clickData
+            ]);
+
+        } catch (Exception $e) {
+            
+            error_log("Error retrieving click data: " . $e->getMessage());
+            $this->sendErrorResponse("An error occurred while retrieving click data.", $e->getCode() ?: 500);
+        }
     }
-}
 
 
     /*
@@ -1020,10 +1080,11 @@ class ProductAPI {
     */ 
 
 
-    //2 functions - getFAQ and editFAQ (admin)
+    //2 functions - getFAQ and editFAQ (editFAQ is allowed for admin)
 
+    //works 
     public function getFAQ(?int $currentUserID, string $currentUserRole){
-        $query = "SELECT FAQ_ID, Question, Answer FROM FAQ ORDER BY FAQ_ID ASC";
+         $query = "SELECT FAQ_ID, Question, Answer FROM FAQ ORDER BY FAQ_ID ASC";
 
         try {
             $stmt = $this->connection->prepare($query);
@@ -1047,10 +1108,50 @@ class ProductAPI {
         }
     }
 
-    public function editFAQ(int $FAQ_ID, string $Question, string $Answer): void
-    {
+    //works
+    // public function editFAQ(int $FAQ_ID, string $Question, string $Answer): void
+    // {
 
-        $query = "UPDATE FAQ SET Question = ?, Answer = ? WHERE FAQ_ID = ?";
+    //     $query = "UPDATE FAQ SET Question = ?, Answer = ? WHERE FAQ_ID = ?";
+
+    //     try {
+    //         $stmt = $this->connection->prepare($query);
+    //         if ($stmt === false) {
+    //             throw new Exception("SQL prepare failed for edit FAQ: " . $this->connection->error, 500);
+    //         }
+
+    //         $stmt->bind_param("ssi", $Question, $Answer, $FAQ_ID); 
+
+    //         if (!$stmt->execute()) {
+    //             throw new Exception("Failed to update FAQ: " . $stmt->error, 500);
+    //         }
+
+    //         if ($stmt->affected_rows === 0) {
+    //             $this->sendErrorResponse("FAQ with ID $FAQ_ID not found or no changes made.", 404);
+    //         } else {
+    //             $this->sendSuccessResponse([
+    //                 "message" => "FAQ updated successfully.",
+    //                 "faq_id" => $FAQ_ID
+    //             ]);
+    //         }
+    //         $stmt->close();
+
+    //     } catch (Exception $e) {
+    //         error_log("Error editing FAQ: " . $e->getMessage());
+    //         $this->sendErrorResponse("An error occurred while editing FAQ.", $e->getCode() ?: 500);
+    //     }
+    // }
+
+    //works  - the difference between that previous one is that the userId is stored and updated according the changes made.  
+    // The Admin user ID who performed the update
+    public function editFAQ(int $FAQ_ID, string $Question, string $Answer, int $currentUserID, string $currentUserRole): void
+    {
+        if ($currentUserRole !== 'Admin') {
+            $this->sendErrorResponse("Unauthorized to edit FAQ. Admins only.", 403);
+            return;
+        }
+
+        $query = "UPDATE FAQ SET Question = ?, Answer = ?, user_id = ? WHERE FAQ_ID = ?";
 
         try {
             $stmt = $this->connection->prepare($query);
@@ -1058,7 +1159,7 @@ class ProductAPI {
                 throw new Exception("SQL prepare failed for edit FAQ: " . $this->connection->error, 500);
             }
 
-            $stmt->bind_param("ssi", $Question, $Answer, $FAQ_ID); 
+            $stmt->bind_param("ssii", $Question, $Answer, $currentUserID, $FAQ_ID);
 
             if (!$stmt->execute()) {
                 throw new Exception("Failed to update FAQ: " . $stmt->error, 500);
@@ -1069,7 +1170,8 @@ class ProductAPI {
             } else {
                 $this->sendSuccessResponse([
                     "message" => "FAQ updated successfully.",
-                    "faq_id" => $FAQ_ID
+                    "faq_id" => $FAQ_ID,
+                    "user_id" => $currentUserID
                 ]);
             }
             $stmt->close();
@@ -1080,60 +1182,111 @@ class ProductAPI {
         }
     }
 
-    public function addFavourite(int $userId, int $tyreId){
-    $checkTyreQuery = "SELECT COUNT(*) FROM products WHERE tyre_id = ?";
-    $stmtCheck = $this->connection->prepare($checkTyreQuery);
-    if ($stmtCheck === false) {
-        throw new Exception("SQL prepare failed for tyre check: " . $this->connection->error, 500);
-    }
-    $stmtCheck->bind_param("i", $tyreId);
-    $stmtCheck->execute();
-    $resultCheck = $stmtCheck->get_result();
-    $row = $resultCheck->fetch_row();
-    $stmtCheck->close();
 
-    if ($row[0] == 0) {
-        $this->sendErrorResponse("Tyre with ID $tyreId not found.", 404);
-        return;
-    }
-
-    $query = "INSERT INTO favourites (user_id, tyre_id) VALUES (?, ?)";
-
-    try {
-        $stmt = $this->connection->prepare($query);
-        if ($stmt === false) {
-            throw new Exception("SQL prepare failed for addFavorite: " . $this->connection->error, 500);
+    //works
+    public function addFAQ(int $user_id, string $user_role, string $question, string $answer): void
+    {
+        // Only allow Admins to add FAQs
+        if ($user_role !== 'Admin') {
+            $this->sendErrorResponse("Unauthorized to add FAQ. Admins only.", 403);
+            return;
         }
 
-        $stmt->bind_param("ii", $userId, $tyreId);
+        $query = "INSERT INTO FAQ (user_id, Question, Answer) VALUES (?, ?, ?)";
 
-        if (!$stmt->execute()) {
-            if ($this->connection->errno == 1062) {
-                $this->sendErrorResponse("Tyre ID $tyreId is already in user's favourites.", 409);
-            } else {
-                throw new Exception("Failed to add favourite: " . $stmt->error, 500);
+        try {
+            $stmt = $this->connection->prepare($query);
+            if ($stmt === false) {
+                throw new Exception("SQL prepare failed for add FAQ: " . $this->connection->error, 500);
             }
-        } else {
-            $this->sendSuccessResponse([
-                "message" => "Tyre added to favourites successfully.",
-                "user_id" => $userId,
-                "tyre_id" => $tyreId
-            ], 201); 
-        }
-        $stmt->close();
 
-    } catch (Exception $e) {
-        error_log("Error adding favourite: " . $e->getMessage());
-        $this->sendErrorResponse("An error occurred while adding favourite.", $e->getCode() ?: 500);
+            $stmt->bind_param("iss", $user_id, $question, $answer);
+
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to add FAQ: " . $stmt->error, 500);
+            }
+
+            $newFAQID = $stmt->insert_id;
+
+            $this->sendSuccessResponse([
+                "status" => "success",
+                "message" => "FAQ added successfully.",
+                "faq_id" => $newFAQID,
+                "user_id" => $user_id,
+                "timestamp" => time()
+            ]);
+
+            $stmt->close();
+
+        } catch (Exception $e) {
+            error_log("Error adding FAQ: " . $e->getMessage());
+            $this->sendErrorResponse([
+                "message" => "An error occurred while adding the FAQ.",
+                "details" => $e->getMessage()
+            ], $e->getCode() ?: 500);
+        }
     }
-}
-    public function removeFavourites(int $userId, int $tyreId){
+
+    public function addFavourite(int $userId, int $tyreId)
+    {
+        // Check if tyre exists
+        $checkTyreQuery = "SELECT COUNT(*) FROM products WHERE tyre_id = ?";
+        $stmtCheck = $this->connection->prepare($checkTyreQuery);
+        if ($stmtCheck === false) {
+            throw new Exception("SQL prepare failed for tyre check: " . $this->connection->error, 500);
+        }
+        $stmtCheck->bind_param("i", $tyreId);
+        $stmtCheck->execute();
+        $resultCheck = $stmtCheck->get_result();
+        $row = $resultCheck->fetch_row();
+        $stmtCheck->close();
+
+        if ($row[0] == 0) {
+            $this->sendErrorResponse("Tyre with ID $tyreId not found.", 404);
+            return;
+        }
+
+        $query = "INSERT INTO favourites (user_id, tyre_id, created_at) VALUES (?, ?, NOW())";
+
+        try {
+            $stmt = $this->connection->prepare($query);
+            if ($stmt === false) {
+                throw new Exception("SQL prepare failed for addFavourite: " . $this->connection->error, 500);
+            }
+
+            $stmt->bind_param("ii", $userId, $tyreId);
+
+            if (!$stmt->execute()) {
+                if ($this->connection->errno == 1062) {
+                    $this->sendErrorResponse("Tyre ID $tyreId is already in user's favourites.", 409);
+                } else {
+                    $errorMsg = "Failed to add favourite: (" . $this->connection->errno . ") " . $stmt->error;
+                    error_log($errorMsg);
+                    $this->sendErrorResponse("An error occurred while adding favourite: " . $errorMsg, 500);
+                }
+            } else {
+                $this->sendSuccessResponse([
+                    "message" => "Tyre added to favourites successfully.",
+                    "user_id" => $userId,
+                    "tyre_id" => $tyreId
+                ], 201);
+            }
+            $stmt->close();
+
+        } catch (Exception $e) {
+            $this->sendErrorResponse("An error occurred while adding favourite.", $e->getCode() ?: 500);
+        }
+    }
+
+
+    //works
+    public function removeFavourite(int $userId, int $tyreId) {
     $query = "DELETE FROM favourites WHERE user_id = ? AND tyre_id = ?";
 
     try {
         $stmt = $this->connection->prepare($query);
         if ($stmt === false) {
-            throw new Exception("SQL prepare failed for removeFavorite: " . $this->connection->error, 500);
+            throw new Exception("SQL prepare failed for removeFavourite: " . $this->connection->error, 500);
         }
 
         $stmt->bind_param("ii", $userId, $tyreId);
@@ -1148,19 +1301,21 @@ class ProductAPI {
             $this->sendSuccessResponse([
                 "message" => "Tyre removed from favourites successfully.",
                 "user_id" => $userId,
-                "tyre_id" => $tyreId
-            ]);
+                "tyre_id" => $tyreId,
+                "status" => "success",
+                "timestamp" => time()
+            ], 200);
         }
         $stmt->close();
 
     } catch (Exception $e) {
         error_log("Error removing favourite: " . $e->getMessage());
-        $this->sendErrorResponse("An error occurred while removing favourite.", $e->getCode() ?: 500);
+        $this->sendErrorResponse("An error occurred while removing favourite: " . $e->getMessage(), $e->getCode() ?: 500);
     }
 }
 
-
-    public function getFavourites(int $userId): void
+//works
+public function getFavourites(int $userId): void
 {
     $query = "
         SELECT
@@ -1203,6 +1358,14 @@ class ProductAPI {
         $favourites = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
 
+        if (empty($favourites)) {
+            $this->sendSuccessResponse([
+                "message" => "No favourite products found.",
+                "data" => []
+            ]);
+            return;
+        }
+
         $this->sendSuccessResponse([
             "message" => "Favourite products retrieved successfully.",
             "data" => $favourites
@@ -1215,7 +1378,8 @@ class ProductAPI {
 }
 
 
-    private function sendSuccessResponse($data, $statusCode = 200) {
+
+    public function sendSuccessResponse($data, $statusCode = 200) {
         http_response_code($statusCode);
         echo json_encode(array_merge($data, [
             'status' => 'success',
@@ -1224,7 +1388,7 @@ class ProductAPI {
         exit;
     }
 
-    private function sendErrorResponse($message, $statusCode = 500) {
+    public function sendErrorResponse($message, $statusCode = 500) {
         http_response_code($statusCode);
         echo json_encode([
             'status' => 'error',
@@ -1238,13 +1402,11 @@ class ProductAPI {
 try {
     $api = new ProductAPI();
     $api->handleRequest();
-} catch (Exception $e) {
+} 
+catch (Exception $e) {
     http_response_code($e->getCode() ?: 500);
-    echo json_encode([
-        'status' => 'error',
-        'message' => $e->getMessage(),
-        'timestamp' => time()
-    ]);
+    echo json_encode([ 'status' => 'error', 'message' => $e->getMessage(), 'timestamp' => time()]);
     exit;
-}$api->handleRequest();
+}
+$api->handleRequest();
 ?>
