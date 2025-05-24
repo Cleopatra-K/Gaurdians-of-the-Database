@@ -1,7 +1,9 @@
 <?php
 function getFilteredSortedProducts($filters = [], $sortBy = "") {
-    require 'config.php'; 
+    require_once('../../configuration/config.php');
 
+    // Initialize MySQLi connection
+    global $conn;
     $where = [];
     $params = [];
     if (!empty($filters['brand'])) {
