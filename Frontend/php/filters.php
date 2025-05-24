@@ -1,5 +1,6 @@
 <?php
 function getFilteredSortedProducts($filters = [], $sortBy = "") {
+
     require_once('../../configuration/config.php');
 
     // Initialize MySQLi connection
@@ -52,7 +53,7 @@ function getFilteredSortedProducts($filters = [], $sortBy = "") {
     while ($row = $result->fetch_assoc()) {
         $products[] = $row;
     }
+    $products = getFilteredSortedProducts($filters, "title-desc");
     return $products;
 }
 
-$products = getFilteredSortedProducts($filters, "title-desc");
