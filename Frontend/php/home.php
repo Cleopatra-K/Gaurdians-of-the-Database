@@ -23,7 +23,7 @@
     </head>
 <body>
     <!-- Entire page is a clickable button -->
-    <a href="products.html" class="home-button">
+    <a href="products.php" class="home-button">
         <p class="slogan">Wheel deal with the problems - you get the best prices</p>
         <div class="logo-slogan-container">
             <div id="logo-img">
