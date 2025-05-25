@@ -1,15 +1,21 @@
 <?php
 // Neo (NMC) Machaba, u23002167
-// include 'config.php';
-include 'filters.php';
+// include 'header.php';
+// // include 'config.php';
+// include 'filters.php';
+include __DIR__ . '/header.php';
+include __DIR__ . '/../../configuration/config.php';  // Adjusted path
+include __DIR__ . '/filters.php';
 
 // Initialize variables
 $products = [];
+$local_products = [];
 $error = '';
 
 try {
     // Make API call to get products
-    $apiUrl = 'GOTapi.php';
+    // $apiUrl = 'GOTapi.php';
+    $apiUrl = '../GOTapi.php';  // Since GOTapi.php is in root directory
     $apiData = [
         'type' => 'GetAllProducts',
         'api_key' => $_SESSION['api_key'] ?? '' // Assuming API key is stored in session
@@ -25,15 +31,16 @@ try {
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    
+
     if ($httpCode !== 200) {
         throw new Exception("API request failed with code: $httpCode");
     }
 
     $result = json_decode($response, true);
-    
+
     if ($result['status'] === 'success') {
-        $products = $result['products'];
+        // $products = $result['products'];
+        $api_products = $result['products'];
     } else {
         throw new Exception($result['message'] ?? 'Unknown error fetching products');
     }
@@ -41,52 +48,85 @@ try {
     $error = $e->getMessage();
 }
 
-$products = getFilteredSortedProducts([], "title-desc");
-    
+// Local Filtering Section
+try {
+    // Get local database products using filters.php
+    $local_products = getFilteredSortedProducts([], "title-desc");
+} catch (Exception $e) {
+    $error .= " | Local filtering error: " . $e->getMessage();
+}
+
+// Combine results (choose one approach)
+// Option 1: Prioritize API products
+// $products = array_merge($api_products, $local_products);
+$products = !empty($api_products) ? $api_products : $local_products;
+
+
+// Option 2: Use local products as fallback
+// $products = !empty($api_products) ? $api_products : $local_products;
+
+// $products = getFilteredSortedProducts([], "title-desc");
+
 ?>
 
 <div class="container-heading">
     <h1>Our Products</h1>
 </div>
 
-<div class="filters">
-    <h3>Filter Products</h3>
-    <div class="filter-group">
-        <div class="filter-item">
-            <label for="category">Category:</label>
-            <select id="category">
-                <option value="all">All</option>
-                <option value="bike">Bikes</option>
-                <option value="accessory">Accessories</option>
-            </select>
-        </div>
-        
-        <div class="filter-item">
-            <label for="price-range">Price Range:</label>
-            <select id="price-range">
-                <option value="all">All</option>
-                <option value="0-2000">R0 - R2,000</option>
-                <option value="2001-5000">R2,001 - R5,000</option>
-                <option value="5001-10000">R5,001 - R10,000</option>
-            </select>
-        </div>
-        
-        <div class="filter-item">
-            <label for="sort">Sort by:</label>
-            <select id="sort">
-                <option value="default">Default</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="name-asc">Name: A to Z</option>
-                <option value="name-desc">Name: Z to A</option>
-            </select>
-        </div>
+<?php
+// Get unique brands from database
+$all_products = getFilteredSortedProducts();
+$brands = array_unique(array_column($all_products, 'brand'));
+?>
+
+<!-- Main content section -->
+<div class="f-container">
+    <!-- FILTER DROPDOWNS -->
+    <div class="filter-dropdown">
+        <label for="filter-general">Filter By:</label>
+        <select id="filter-general">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="title-asc">Title: A-Z</option>
+            <option value="title-desc">Title: Z-A</option>
+        </select>
     </div>
-    
-    <div class="filter-group">
-        <div class="filter-item">
-            <input type="text" id="search" placeholder="Search products...">
-        </div>
+
+    <div class="filter-dropdown">
+        <label for="filter-brand">Filter By Brand:</label>
+        <select id="filter-brand">
+            <option value="">All Brands</option>
+            <?php foreach ($brands as $brand): ?>
+                <option value="<?= htmlspecialchars($brand) ?>">
+                    <?= htmlspecialchars($brand) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <div class="filter-dropdown">
+        <label for="filter-category">Filter By Category:</label>
+        <select id="filter-category">
+            <option value="">All Categories</option>
+            <!-- Dynamically populated -->
+        </select>
+    </div>
+
+    <div class="filter-dropdown">
+        <label for="filter-distributor">Filter By Distributor:</label>
+        <select id="filter-distributor">
+            <option value="">All Distributors</option>
+            <!-- Dynamically populated -->
+        </select>
+    </div>
+
+    <div class="filter-dropdown">
+        <label for="filter-availability">Availability:</label>
+        <select id="filter-availability">
+            <option value="">All</option>
+            <option value="1">In Stock</option>
+            <option value="0">Out of Stock</option>
+        </select>
     </div>
 </div>
 
@@ -95,25 +135,30 @@ $products = getFilteredSortedProducts([], "title-desc");
         <p>Error loading products: <?php echo htmlspecialchars($error); ?></p>
     </div>
 <?php else: ?>
-    <div class="product-container">
+    <div class="product-container" id="products-container">
         <?php foreach ($products as $product): ?>
-            <div class="product-card" 
-                 data-category="<?php echo $product['has_tube'] ? 'accessory' : 'bike'; ?>"
-                 data-price="<?php echo $product['selling_price']; ?>">
+            <div class="product-card" data-category="<?php echo $product['has_tube'] ? 'accessory' : 'bike'; ?>"
+                data-price="<?php echo $product['selling_price']; ?>">
                 <a href="view.php?id=<?php echo $product['tyre_id']; ?>">
-                    <img src="../img/<?php echo htmlspecialchars(basename($product['img_url'])); ?>" 
-                         alt="<?php echo htmlspecialchars($product['size']); ?>" 
-                         class="product-image">
+                    <!-- <img src="../img/<?php echo htmlspecialchars(basename($product['img_url'])); ?>"  -->
+                    <!-- <img src="<?php echo file_exists('../img/' . basename($product['img_url']))
+                        ? '../img/' . htmlspecialchars(basename($product['img_url']))
+                        : '../img/MICHELIN_Primacy_3_3Q.webp'; ?>"
+                        alt="<?php echo htmlspecialchars($product['size']); ?>" class="product-image"> -->
+                    <?php
+                    $imgPath = '../img/' . basename($product['img_url']);
+                    $fallback = '../img/MICHELIN_Primacy_3_3Q.webp';
+                    ?>
+                    <img src="<?= file_exists($imgPath) ? $imgPath : $fallback ?>"
+                        alt="<?= htmlspecialchars($product['size']) ?>">
                 </a>
                 <h3 class="product-title"><?php echo htmlspecialchars($product['size']); ?></h3>
                 <p class="product-price">R<?php echo number_format($product['selling_price'], 2); ?></p>
                 <div class="product-actions">
-                    <button class="btn btn-primary" 
-                            onclick="addToCart(<?php echo $product['tyre_id']; ?>)">
+                    <button class="btn btn-primary" onclick="addToCart(<?php echo $product['tyre_id']; ?>)">
                         Add to Cart
                     </button>
-                    <button class="btn btn-wishlist" 
-                            onclick="toggleWishlist(<?php echo $product['tyre_id']; ?>, this)">
+                    <button class="btn btn-wishlist" onclick="toggleWishlist(<?php echo $product['tyre_id']; ?>, this)">
                         <i class="far fa-heart"></i>
                     </button>
                 </div>
@@ -134,23 +179,24 @@ $products = getFilteredSortedProducts([], "title-desc");
             body: JSON.stringify({
                 type: 'AddToCart',
                 tyre_id: productId,
-                api_key: '<?php echo $_SESSION['api_key'] ?? ''; ?>'
+                // api_key: '<?php echo $_SESSION['api_key'] ?? ''; ?>'
+                api_key: '<?= isset($_SESSION['api_key']) ? $_SESSION['api_key'] : '' ?>'
             })
         })
-        .then(response => response.json())
-        .then(data => {
-            if(data.status === 'success') {
-                alert('Product added to cart!');
-            } else {
-                alert('Error: ' + data.message);
-            }
-        });
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Product added to cart!');
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            });
     }
-    
+
     function toggleWishlist(productId, button) {
         const icon = button.querySelector('i');
         const isActive = icon.classList.contains('fas');
-        
+
         fetch('GOTapi.php', {
             method: 'POST',
             headers: {
@@ -162,15 +208,15 @@ $products = getFilteredSortedProducts([], "title-desc");
                 api_key: '<?php echo $_SESSION['api_key'] ?? ''; ?>'
             })
         })
-        .then(response => response.json())
-        .then(data => {
-            if(data.status === 'success') {
-                icon.classList.toggle('far');
-                icon.classList.toggle('fas');
-            } else {
-                alert('Error: ' + data.message);
-            }
-        });
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    icon.classList.toggle('far');
+                    icon.classList.toggle('fas');
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            });
     }
 </script>
 

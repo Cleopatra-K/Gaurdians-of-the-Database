@@ -2,7 +2,7 @@
 console.log("✅ Entered products.js");
 //u23547121 CT Kwenda
 
-const baseUrl = "../../../api.php"; // Adjust as per your API's file path
+const baseUrl = "../GOTapi.php"; // Adjust as per your API's file path
 
 // DOM Elements for products page
 // *** IMPORTANT FIX: Use getElementById for products-container consistently ***

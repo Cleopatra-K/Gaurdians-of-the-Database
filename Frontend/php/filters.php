@@ -1,7 +1,8 @@
 <?php
 function getFilteredSortedProducts($filters = [], $sortBy = "") {
 
-    require_once('../../configuration/config.php');
+    // require_once('../../configuration/config.php');
+    require_once(__DIR__ . '/../../../configuration/config.php');
 
     // Initialize MySQLi connection
     global $conn;
@@ -53,7 +54,9 @@ function getFilteredSortedProducts($filters = [], $sortBy = "") {
     while ($row = $result->fetch_assoc()) {
         $products[] = $row;
     }
-    $products = getFilteredSortedProducts($filters, "title-desc");
+
+    // Remove recursive call at end of function
+    // $products = getFilteredSortedProducts($filters, "title-desc");
     return $products;
 }
 
