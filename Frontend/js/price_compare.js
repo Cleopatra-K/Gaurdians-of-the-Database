@@ -59,6 +59,25 @@ async function getProd(params = {}) {
     showBuffering();
     
     try {
+        // Build filter parameters
+        const filterParams = {
+            type: 'GetAllProducts',
+            page: currentPage,
+            page_size: isLoggedIn ? LOGGED_IN_PAGE_SIZE : GUEST_PAGE_SIZE
+        };
+
+        // Add filters if they exist
+        if (params.brand) filterParams.brand = params.brand;
+        if (params.category) filterParams.category = params.category;
+        if (params.distributor) filterParams.distributor = params.distributor;
+        if (params.size) filterParams.size = params.size;
+        if (params.load_index) filterParams.load_index = params.load_index;
+        if (params.has_tube) filterParams.has_tube = params.has_tube;
+        if (params.sort) filterParams.sort = params.sort;
+        if (params.order) filterParams.order = params.order;
+        if (params.search) filterParams.search = params.search;
+        if (params.fuzzy) filterParams.fuzzy = params.fuzzy;
+
         const response = await fetch(baseUrl, {
             method: 'POST',
             headers: {
@@ -91,16 +110,7 @@ async function getProd(params = {}) {
     }
 }
 
-// Toggle load more button visibility
-// function toggleLoadMoreButton() {
-//     if (!isLoggedIn) {
-//         const loadMoreBtn = document.getElementById('load-more-btn');
-//         if (loadMoreBtn) {
-//             const hasMore = allProducts.length > GUEST_PAGE_SIZE * currentPage;
-//             loadMoreBtn.style.display = hasMore ? 'block' : 'none';
-//         }
-//     }
-// }
+
 function toggleLoadMoreButton() {
     const loadMoreBtn = document.getElementById('load-more-btn');
     
@@ -133,6 +143,9 @@ function transformApiResponse(products) {
                 size: product.size,
                 load_index: product.load_index,
                 has_tube: product.has_tube,
+                brand: product.brand,
+                category: product.category,
+                distributor: product.distributor,
                 listings: []
             };
         }
@@ -146,7 +159,10 @@ function transformApiResponse(products) {
             original_price: product.original_price || null,
             selling_price: product.selling_price || calculateMockPrice(product),
             serial_num: product.serial_num,
-            img_url: product.img_url || '../img/construction.png'
+            img_url: product.img_url || '../img/construction.png',
+            brand: product.brand,
+            category: product.category,
+            distributor: product.distributor
         };
         
         productGroups[groupKey].listings.push(listing);
@@ -177,15 +193,33 @@ function displayProds(productGroups) {
     }
 
     productGroups.forEach(group => {
+        // Create a Set to track unique listings
+        const uniqueListings = [];
+        const seenListings = new Set();
+
+        // Process listings to remove exact duplicates
+        group.listings.forEach(listing => {
+            if (!listing.name) return; // Skip if no seller name
+            
+            // Create a unique key for each listing combination
+            const listingKey = `${listing.name.toLowerCase().trim()}_${group.size}_${listing.selling_price}`;
+            
+            if (!seenListings.has(listingKey)) {
+                seenListings.add(listingKey);
+                uniqueListings.push(listing);
+            }
+        });
+
         const productCard = document.createElement('div');
         productCard.classList.add('product-card');
 
         productCard.innerHTML = `
             <div class="product-header">
                 <div class="product-image-container">
-                    <img src="${group.listings[0].img_url || '../img/construction.png'}" 
+                    <img src="${uniqueListings[0]?.img_url || '../img/construction.png'}" 
                          alt="${group.size} Tyre" 
-                         class="product-image">
+                         class="product-image"
+                         onerror="this.src='../img/construction.png'">
                 </div>
                 <div class="product-specs-container">
                     <div class="specs-grid">
@@ -208,7 +242,7 @@ function displayProds(productGroups) {
             <div class="seller-section">
                 <h3 class="seller-section-title">Available Sellers</h3>
                 <div class="seller-listings">
-                    ${group.listings.map((listing, index) => `
+                    ${uniqueListings.map((listing, index) => `
                         <div class="seller-row">
                             <div class="seller-info">
                                 <span class="seller-name ${getSellerDotColor(index)}">
@@ -391,7 +425,82 @@ function setupEventListeners() {
             }
         }, 300));
     }
+
+    const filterBrand = document.getElementById('filter-brand');
+    const filterCategory = document.getElementById('filter-category');
+    const filterDistributor = document.getElementById('filter-distributor');
+
+    if (filterBrand) {
+        filterBrand.addEventListener('change', (e) => {
+            const brand = e.target.value;
+            currentPage = 1;
+            getProd({ brand: brand || undefined });
+        });
+    }
+
+    if (filterCategory) {
+        filterCategory.addEventListener('change', (e) => {
+            const category = e.target.value;
+            currentPage = 1;
+            getProd({ category: category || undefined });
+        });
+    }
+
+    if (filterDistributor) {
+        filterDistributor.addEventListener('change', (e) => {
+            const distributor = e.target.value;
+            currentPage = 1;
+            getProd({ distributor: distributor || undefined });
+        });
+    }
+
+    // Load filter options on page load
+    loadFilterOptions();
 }
+
+async function loadFilterOptions() {
+    try {
+        const response = await fetch(baseUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                type: 'GetFilterOptions'
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            populateFilterOptions('filter-brand', result.data.brands || []);
+            populateFilterOptions('filter-category', result.data.categories || []);
+            populateFilterOptions('filter-distributor', result.data.distributors || []);
+        }
+    } catch (error) {
+        console.error('Error loading filter options:', error);
+    }
+}
+
+function populateFilterOptions(selectId, options) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    // Clear existing options except the first one
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
+
+    // Add new options
+    options.forEach(option => {
+        const opt = document.createElement('option');
+        opt.value = option.value || option;
+        opt.textContent = option.label || option;
+        select.appendChild(opt);
+    });
+}
+
 
 // Helper function for seller dot color
 function getSellerDotColor(index) {
