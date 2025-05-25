@@ -545,7 +545,6 @@ class ProductAPI {
                     p.load_index, 
                     p.has_tube,
                     p.serial_num, 
-                    p.rating, 
                     p.img_url,
                     p.original_price,
                     p.selling_price,
@@ -927,13 +926,12 @@ class ProductAPI {
                     serial_num = ?, 
                     original_price = ?, 
                     selling_price = ?, 
-                    rating = ?, 
                     img_url = ?
                 WHERE tyre_id = ?
             ");
 
             $stmt->bind_param(
-                "isiisddssi",
+                "isiisddsi",
                 $user_id,                            // i
                 $productData['size'],               // s
                 $productData['load_index'],         // i
@@ -941,7 +939,6 @@ class ProductAPI {
                 $productData['serial_num'],         // s
                 $productData['original_price'],     // d
                 $productData['selling_price'],      // d
-                $productData['rating'],             // s
                 $productData['img_url'],            // s
                 $tyre_id                            // i
             );
@@ -1034,7 +1031,6 @@ class ProductAPI {
                         p.serial_num,
                         p.original_price,
                         p.selling_price,
-                        p.rating,
                         p.size,
                         p.load_index,
                         p.has_tube,
@@ -1058,7 +1054,6 @@ class ProductAPI {
                         p.serial_num,
                         p.original_price,
                         p.selling_price,
-                        p.rating,
                         p.size,
                         p.load_index,
                         p.has_tube,
@@ -1071,8 +1066,7 @@ class ProductAPI {
                     WHERE
                         p.user_id = ?
                     GROUP BY
-                        p.tyre_id, p.serial_num, p.original_price, p.selling_price,
-                        p.rating, p.size, p.load_index, p.has_tube, p.img_url
+                        p.tyre_id, p.serial_num, p.original_price, p.selling_price, p.size, p.load_index, p.has_tube, p.img_url
                     ORDER BY
                         total_clicks ASC
                     ";
@@ -1376,7 +1370,6 @@ class ProductAPI {
                 p.serial_num,
                 p.original_price,
                 p.selling_price,
-                p.rating,
                 p.img_url,
                 u.username AS seller_username,
                 u.email AS seller_email
