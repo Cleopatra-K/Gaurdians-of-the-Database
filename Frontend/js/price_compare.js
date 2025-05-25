@@ -8,13 +8,31 @@ const filterLoadIndex = document.getElementById('filter-load-index');
 const filterHasTube = document.getElementById('filter-has-tube');
 const searchBar = document.querySelector('.search-bar');
 const GUEST_PAGE_SIZE = 5;
+const LOGGED_IN_PAGE_SIZE = 10;
 let allProducts = [];
 let isLoggedIn = false;
 let currentPage = 1;
 
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
 // Check login status using cookies
 function checkLoggedInStatus() {
-    return document.cookie.split(';').some((item) => item.trim().startsWith('PHPSESSID='));
+    // return document.cookie.split(';').some((item) => item.trim().startsWith('PHPSESSID='));
+    const apiKey = localStorage.getItem('api_key') || getCookie('api_key');
+    return !!apiKey;
+}
+
+function handleLoadMore() {
+    if (!isLoggedIn) {
+        showLoginPrompt();
+        return;
+    }
+    currentPage++;
+    getProd();
 }
 
 // Initialize the page
@@ -61,7 +79,8 @@ async function getProd(params = {}) {
         }
 
         allProducts = transformApiResponse(result.products);
-        const productsToShow = isLoggedIn ? allProducts : allProducts.slice(0, GUEST_PAGE_SIZE * currentPage);
+        const pageSize = isLoggedIn ? LOGGED_IN_PAGE_SIZE : GUEST_PAGE_SIZE;
+        const productsToShow = allProducts.slice(0, pageSize * currentPage);
         displayProds(productsToShow);
         toggleLoadMoreButton();
         
@@ -73,14 +92,31 @@ async function getProd(params = {}) {
 }
 
 // Toggle load more button visibility
+// function toggleLoadMoreButton() {
+//     if (!isLoggedIn) {
+//         const loadMoreBtn = document.getElementById('load-more-btn');
+//         if (loadMoreBtn) {
+//             const hasMore = allProducts.length > GUEST_PAGE_SIZE * currentPage;
+//             loadMoreBtn.style.display = hasMore ? 'block' : 'none';
+//         }
+//     }
+// }
 function toggleLoadMoreButton() {
-    if (!isLoggedIn) {
-        const loadMoreBtn = document.getElementById('load-more-btn');
-        if (loadMoreBtn) {
-            const hasMore = allProducts.length > GUEST_PAGE_SIZE * currentPage;
-            loadMoreBtn.style.display = hasMore ? 'block' : 'none';
-        }
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    
+    if (!loadMoreBtn) {
+        const btn = document.createElement('button');
+        btn.id = 'load-more-btn';
+        btn.className = 'load-more-btn';
+        btn.textContent = 'Load More';
+        btn.addEventListener('click', handleLoadMore);
+        productsContainer.appendChild(btn);
+        return;
     }
+
+    const pageSize = isLoggedIn ? LOGGED_IN_PAGE_SIZE : GUEST_PAGE_SIZE;
+    const hasMore = allProducts.length > pageSize * currentPage;
+    loadMoreBtn.style.display = hasMore ? 'block' : 'none';
 }
 
 // Transform API response
@@ -109,7 +145,8 @@ function transformApiResponse(products) {
             user_id: product.user_id || null,
             original_price: product.original_price || null,
             selling_price: product.selling_price || calculateMockPrice(product),
-            serial_num: product.serial_num
+            serial_num: product.serial_num,
+            img_url: product.img_url || '../img/construction.png'
         };
         
         productGroups[groupKey].listings.push(listing);
@@ -121,8 +158,6 @@ function transformApiResponse(products) {
     });
 }
 
-// Display products with favorites button
-// Display products with favorites button
 function displayProds(productGroups) {
     if (!productsContainer) {
         console.error("productsContainer is null in displayProds");
@@ -146,42 +181,53 @@ function displayProds(productGroups) {
         productCard.classList.add('product-card');
 
         productCard.innerHTML = `
-            <div class="product-image-container">
-                <img src="${group.listings[0].img_url || '../img/construction.png'}" 
-                     alt="${group.size} Tyre" 
-                     class="product-image">
-                <div class="product-specs">
-                    <span class="spec-badge">${group.size}</span>
-                    <span class="spec-badge">LI: ${group.load_index}</span>
-                    <span class="spec-badge">${group.has_tube ? 'Tube' : 'Tubeless'}</span>
+            <div class="product-header">
+                <div class="product-image-container">
+                    <img src="${group.listings[0].img_url || '../img/construction.png'}" 
+                         alt="${group.size} Tyre" 
+                         class="product-image">
+                </div>
+                <div class="product-specs-container">
+                    <div class="specs-grid">
+                        <div class="spec-item">
+                            <span class="spec-label">Size</span>
+                            <span class="spec-value">${group.size}</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Load Index</span>
+                            <span class="spec-value">${group.load_index}</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Type</span>
+                            <span class="spec-value">${group.has_tube ? 'Tube' : 'Tubeless'}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div class="product-details">
-                <div class="seller-listings-container">
-                    <h3>Available Sellers</h3>
-                    <div class="seller-listings">
-                        ${group.listings.map((listing, index) => `
-                            <div class="seller-row">
-                                <div class="seller-info">
-                                    <span class="seller-name ${getSellerDotColor(index)}">
-                                        ${listing.name || 'Unknown Seller'}
-                                    </span>
-                                    <span class="seller-price">
-                                        $${parseFloat(listing.selling_price).toFixed(2)}
-                                        ${listing.original_price ? 
-                                         `<span class="original-price">$${parseFloat(listing.original_price).toFixed(2)}</span>` : ''}
-                                    </span>
+            <div class="seller-section">
+                <h3 class="seller-section-title">Available Sellers</h3>
+                <div class="seller-listings">
+                    ${group.listings.map((listing, index) => `
+                        <div class="seller-row">
+                            <div class="seller-info">
+                                <span class="seller-name ${getSellerDotColor(index)}">
+                                    ${listing.name || 'Unknown Seller'}
+                                </span>
+                                <div class="price-container">
+                                    <span class="current-price">$${parseFloat(listing.selling_price).toFixed(2)}</span>
+                                    ${listing.original_price ? 
+                                     `<span class="original-price">$${parseFloat(listing.original_price).toFixed(2)}</span>` : ''}
                                 </div>
-                                <button class="favorite-btn" 
-                                        data-tyre-id="${listing.tyre_id}"
-                                        ${!isLoggedIn ? 'disabled' : ''}>
-                                    ${!isLoggedIn ? '♡' : '❤️'}
-                                    <span class="tooltip">${!isLoggedIn ? 'Login to add favorites' : 'Add to favorites'}</span>
-                                </button>
                             </div>
-                        `).join('')}
-                    </div>
+                            <button class="favorite-btn" 
+                                    data-tyre-id="${listing.tyre_id}"
+                                    ${!isLoggedIn ? 'disabled' : ''}>
+                                ${!isLoggedIn ? '♡' : '❤️'}
+                                <span class="tooltip">${!isLoggedIn ? 'Login to save' : 'Save to favorites'}</span>
+                            </button>
+                        </div>
+                    `).join('')}
                 </div>
             </div>
         `;
@@ -214,7 +260,7 @@ async function addToFavorites(event) {
                 'Content-Type': 'application/json',
             },
             credentials: 'include',
-            body: JSON.stringify({
+            body: JSON.stringify({ 
                 type: 'addFavourite',
                 tyre_id: parseInt(tyreId)
             })
