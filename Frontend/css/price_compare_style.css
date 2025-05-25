@@ -190,6 +190,7 @@ body.dark-theme #load-more-btn:hover {
   color: #1f2f40;
 }
 
+<<<<<<< Updated upstream
 /* Updated to match products.js structure */
 #products-container {
     display: flex;
@@ -293,10 +294,152 @@ body.dark-theme #load-more-btn:hover {
 }
 
 /* Seller dot colors */
+=======
+/* Product Card Layout */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background-color: white;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+/* Product Header - Contains image and specs */
+.product-header {
+  display: flex;
+  padding: 1.5rem;
+  background-color: var(--color-muted);
+  border-bottom: 1px solid #eee;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.product-image-container {
+  flex: 0 0 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.product-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+/* Specs Grid Layout */
+.product-specs-container {
+  flex: 1;
+}
+
+.specs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.spec-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0.8rem;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.spec-label {
+  font-family: 'Lora', serif;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  opacity: 0.8;
+  margin-bottom: 0.3rem;
+}
+
+.spec-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+/* Seller Section */
+.seller-section {
+  padding: 1.5rem;
+}
+
+.seller-section-title {
+  font-family: 'Lora', serif;
+  font-size: 1.2rem;
+  color: var(--color-heading);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.seller-listings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* Seller Rows */
+.seller-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  background-color: white;
+  border: 1px solid #f0f0f0;
+}
+
+.seller-row:hover {
+  background-color: rgba(47, 149, 167, 0.05);
+  border-color: rgba(47, 149, 167, 0.2);
+}
+
+.seller-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.seller-name {
+  font-weight: 600;
+  position: relative;
+  padding-left: 18px;
+  color: var(--color-heading);
+}
+
+/* Colored bullet points */
+.seller-name::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+>>>>>>> Stashed changes
 .seller-dot-red::before { background-color: #e63946; }
 .seller-dot-blue::before { background-color: #1d3557; }
 .seller-dot-green::before { background-color: #2a9d8f; }
 .seller-dot-yellow::before { background-color: #e9c46a; }
+<<<<<<< Updated upstream
 
 .seller-price {
     color: var(--color-accent);
@@ -355,6 +498,124 @@ body.dark-theme #load-more-btn:hover {
 .favorite-btn:hover .tooltip {
     visibility: visible;
     opacity: 1;
+=======
+.seller-dot-purple::before { background-color: #6a4c93; }
+.seller-dot-orange::before { background-color: #f77f00; }
+
+.price-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.current-price {
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.original-price {
+  font-size: 0.9rem;
+  color: #999;
+  text-decoration: line-through;
+}
+
+/* Favorite Button */
+.favorite-btn {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin-left: 1rem;
+  transition: all 0.3s ease;
+  color: var(--color-accent-light);
+  position: relative;
+}
+
+.favorite-btn:hover {
+  color: var(--color-accent);
+  transform: scale(1.1);
+}
+
+.favorite-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.favorite-btn .tooltip {
+  visibility: hidden;
+  width: 120px;
+  background-color: var(--color-heading);
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 0.8rem;
+}
+
+.favorite-btn:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .product-header {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  
+  .product-image-container {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .specs-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .seller-section {
+    padding: 1rem;
+  }
+}
+
+/* Dark theme adjustments */
+body.dark-theme .product-card {
+  background-color: var(--color-dark-card);
+  border-color: var(--color-dark-border);
+}
+
+body.dark-theme .product-header {
+  background-color: var(--color-dark-accent);
+}
+
+body.dark-theme .spec-item,
+body.dark-theme .seller-row {
+  background-color: var(--color-dark-card);
+  border-color: var(--color-dark-border);
+}
+
+body.dark-theme .spec-label {
+  color: var(--color-dark-text);
+  opacity: 0.8;
+}
+
+body.dark-theme .spec-value,
+body.dark-theme .seller-name,
+body.dark-theme .seller-section-title {
+  color: var(--color-dark-text);
+}
+
+body.dark-theme .original-price {
+  color: var(--color-accent-light);
+>>>>>>> Stashed changes
 }
 
 /* Load more button */
@@ -369,7 +630,10 @@ body.dark-theme #load-more-btn:hover {
     cursor: pointer;
     font-size: 1rem;
     transition: background-color 0.3s;
+<<<<<<< Updated upstream
     font-family: 'Playfair Display', serif;
+=======
+>>>>>>> Stashed changes
 }
 
 #load-more-btn:hover {
@@ -395,7 +659,10 @@ body.dark-theme #load-more-btn:hover {
 .loading-text {
     color: var(--color-heading);
     font-size: 1rem;
+<<<<<<< Updated upstream
     font-family: 'Playfair Display', serif;
+=======
+>>>>>>> Stashed changes
 }
 
 @keyframes spin {
@@ -408,7 +675,10 @@ body.dark-theme #load-more-btn:hover {
     text-align: center;
     padding: 2rem;
     color: var(--color-error);
+<<<<<<< Updated upstream
     font-family: 'Playfair Display', serif;
+=======
+>>>>>>> Stashed changes
 }
 
 .error-message button {
@@ -419,7 +689,10 @@ body.dark-theme #load-more-btn:hover {
     border: none;
     border-radius: 5px;
     cursor: pointer;
+<<<<<<< Updated upstream
     font-family: 'Playfair Display', serif;
+=======
+>>>>>>> Stashed changes
 }
 
 /* Temporary message */
@@ -433,7 +706,10 @@ body.dark-theme #load-more-btn:hover {
     border-radius: 25px;
     font-weight: bold;
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+<<<<<<< Updated upstream
     font-family: 'Playfair Display', serif;
+=======
+>>>>>>> Stashed changes
     animation: slideIn 0.3s ease-out;
 }
 
@@ -563,7 +839,10 @@ body.dark-theme .favorite-btn:hover {
   border-radius: 8px;
   border: 1px solid var(--filter-border);
   background-color: white;
+<<<<<<< Updated upstream
   font-family: 'Playfair Display', serif;
+=======
+>>>>>>> Stashed changes
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -696,7 +975,10 @@ body.dark-theme .favorite-btn:hover {
   font-weight: 600;
   position: relative;
   padding-left: 18px;
+<<<<<<< Updated upstream
   font-family: 'Playfair Display', serif;
+=======
+>>>>>>> Stashed changes
   color: var(--color-heading);
   transition: color 0.2s ease;
 }
@@ -724,7 +1006,10 @@ body.dark-theme .favorite-btn:hover {
 .seller-price {
   color: var(--color-accent);
   font-weight: 600;
+<<<<<<< Updated upstream
   font-family: 'Playfair Display', serif;
+=======
+>>>>>>> Stashed changes
   display: flex;
   align-items: center;
   gap: 0.5rem;
