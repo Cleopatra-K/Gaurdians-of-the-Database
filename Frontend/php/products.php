@@ -39,59 +39,51 @@ try {
 } catch (Exception $e) {
     $error = $e->getMessage();
 }
-function getFilteredSortedProducts($filters = [], $sortBy = "") {
-    $where = [];
-    $params = [];
-    if (!empty($filters['brand'])) {
-        $where[] = "brand = ?";
-        $params[] = $filters['brand'];
-    }
-    if (!empty($filters['category'])) {
-        $where[] = "categories LIKE ?";
-        $params[] = '%' . $filters['category'] . '%';
-    }
-    if (!empty($filters['distributor'])) {
-        $where[] = "distributor = ?";
-        $params[] = $filters['distributor'];
-    }
+function getFilteredSortedProducts($products, $filters = [], $sortBy = "") {
 
-    if (isset($filters['availability'])) {
-        $where[] = "availability = ?";
-        $params[] = $filters['availability'] ? 1 : 0;
-    }
+    $filtered = array_filter($products, function($product) use ($filters) {
+        $match = true;
+        if (!empty($filters['brand'])) {
+            $match = $match && (strcasecmp($product['brand'], $filters['brand']) === 0);
+        }
+        if (!empty($filters['category'])) {
+            $categories = is_array($product['categories']) ? $product['categories'] : explode(',', $product['categories']);
+            $categories = array_map('trim', array_map('strtolower', $categories));
+            $match = $match && in_array(strtolower($filters['category']), $categories);
+        }
+        if (!empty($filters['distributor'])) {
+            $match = $match && (strcasecmp($product['distributor'], $filters['distributor']) === 0);
+        }
+        if (isset($filters['availability'])) {
+            $match = $match && ($product['availability'] == $filters['availability']);
+        }
+        return $match;
+    });
 
-    $sql = "SELECT * FROM products";
-    if ($where) {
-        $sql .= " WHERE " . implode(" AND ", $where);
-    }
     if ($sortBy === "title-desc") {
-        $sql .= " ORDER BY title DESC";
+        usort($filtered, function($a, $b) {
+            return strcasecmp($b['title'], $a['title']);
+        });
     } elseif ($sortBy === "brand") {
-        $sql .= " ORDER BY brand ASC";
+        usort($filtered, function($a, $b) {
+            return strcasecmp($a['brand'], $b['brand']);
+        });
     } elseif ($sortBy === "category") {
-        $sql .= " ORDER BY categories ASC";
+        usort($filtered, function($a, $b) {
+            return strcasecmp($a['categories'], $b['categories']);
+        });
     } elseif ($sortBy === "distributor") {
-        $sql .= " ORDER BY distributor ASC";
+        usort($filtered, function($a, $b) {
+            return strcasecmp($a['distributor'], $b['distributor']);
+        });
     } elseif ($sortBy === "availability") {
-        $sql .= " ORDER BY availability DESC";
+        usort($filtered, function($a, $b) {
+            return $b['availability'] <=> $a['availability'];
+        });
     }
 
-    $stmt = $conn->prepare($sql);
-    if ($params) {
-        $types = str_repeat('s', count($params));
-        $stmt->bind_param($types, ...$params);
-    }
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    $products = [];
-    while ($row = $result->fetch_assoc()) {
-        $products[] = $row;
-    }
-    return $products;
+    return array_values($filtered);
 }
-
-$products = getFilteredSortedProducts($filters, "title-desc");
     
 ?>
 
