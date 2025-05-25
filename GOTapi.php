@@ -153,9 +153,15 @@ class ProductAPI {
                     $this->handleEditRequest($data);
                     break;
                 case 'Click':
-                    $user = $this->verifyApiKey($data['apikey'] ?? $data['api_key'] ?? '');
+                             $user = $this->verifyApiKey($data['apikey'] ?? $data['api_key'] ?? '');
+
                     if (!$user){
                         $this->sendErrorResponse("Unauthorized: Invalid API key", 401);
+                        return;
+                    }
+
+                    if (!in_array($user['role'], ['Admin', 'Seller'])) {
+                        $this->sendErrorResponse("Access Denied: Only Admins and Sellers can view click events.", 403);
                         return;
                     }
 
@@ -227,6 +233,12 @@ class ProductAPI {
                         $this->sendErrorResponse("Access Denied: Only authenticated Customers and Sellers can view favourites.", 403);
                     }
                     $this->getFavourites($user['user_id']);
+                    break;
+                case 'SubmitRating':
+                    $this->submitRating($data);
+                    break;
+                case 'GetProductRating':
+                    $this->getProductRating($data);
                     break;
                 default:
                     throw new Exception("Invalid request type: " . $requestType, 400);
@@ -423,7 +435,7 @@ class ProductAPI {
                         $stmt = $this->connection->prepare("INSERT INTO sellers 
                             (user_id, address, website, business_reg_num) 
                             VALUES (?, ?, ?, ?)");
-                        $stmt->bind_param("issi", 
+                        $stmt->bind_param("isss", 
                             $user_id, 
                             $data['address'],
                             $data['website'],
@@ -470,50 +482,89 @@ class ProductAPI {
     }
 
     
-    // works
     private function getAllProducts($data) {
         try {
-            $role = null;
-            $user_id = null;
+            // Start session if not already started
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
 
-            // 1. Optional API key validation
+            // Track guest views using cookies
+            $isGuest = true;
+            $viewLimit = 50; // Maximum allowed views for guests
+            $cookieName = 'guest_product_views';
+
+            // Check if user is logged in via API key
+            $validatedUser = null;
             if (isset($data['api_key'])) {
-                $stmt = $this->connection->prepare("SELECT user_id, role FROM users WHERE api_key = ?");
+                $stmt = $this->connection->prepare("SELECT user_id, username, role FROM users WHERE api_key = ?");
                 $stmt->bind_param("s", $data['api_key']);
                 $stmt->execute();
                 $result = $stmt->get_result();
-
+                
                 if ($result->num_rows > 0) {
-                    $user = $result->fetch_assoc();
-                    $role = $user['role'];
-                    $user_id = $user['user_id'];
+                    $validatedUser = $result->fetch_assoc();
+                    $isGuest = false;
+                    
+                    // Reset guest view count if user logs in
+                    if (isset($_COOKIE[$cookieName])) {
+                        setcookie($cookieName, '', time() - 3600, '/');
+                    }
                 }
             }
 
-            // 2. Construct SQL query
+            // For guests, implement view tracking
+            if ($isGuest) {
+                $currentViews = isset($_COOKIE[$cookieName]) ? (int)$_COOKIE[$cookieName] : 0;
+                $currentViews++;
+                
+                // Set cookie with 24 hour expiration
+                setcookie(
+                    $cookieName, 
+                    $currentViews, 
+                    time() + 86400, // 24 hours
+                    '/', 
+                    $_SERVER['HTTP_HOST'], 
+                    isset($_SERVER['HTTPS']), 
+                    true
+                );
+
+                if ($currentViews > $viewLimit) {
+                    $this->sendErrorResponse(
+                        "Please log in to continue browsing. Guest view limit reached.", 
+                        401,
+                        [
+                            'requires_login' => true,
+                            'view_limit' => $viewLimit,
+                            'views_used' => $currentViews
+                        ]
+                    );
+                    return;
+                }
+            }
+
+            // Modified query to include seller information
             $query = "
-                                SELECT 
-                    p.tyre_id, p.size, p.load_index, p.has_tube, 
-                    p.serial_num, p.rating, p.img_url, 
-                    u.name AS seller_name
+                SELECT 
+                    p.tyre_id, 
+                    p.size, 
+                    p.load_index, 
+                    p.has_tube,
+                    p.serial_num, 
+                    p.rating, 
+                    p.img_url,
+                    p.original_price,
+                    p.selling_price,
+                    p.user_id,
+                    u.username as seller_username,
+                    u.name as seller_name,
+                    u.role as seller_role
                 FROM products p
-                JOIN users u ON p.user_id = u.user_id ";
-            $params = [];
-            $types = "";
-
-            // If role is 'Seller', filter products by user_id
-            if ($role === 'Seller') {
-                $query .= " WHERE p.user_id = ?";
-                $params[] = $user_id;
-                $types .= "i";
-            }
-
+                LEFT JOIN users u ON p.user_id = u.user_id
+                GROUP BY p.tyre_id
+            ";
+            
             $stmt = $this->connection->prepare($query);
-            if (!empty($params)) {
-                $stmt->bind_param($types, ...$params);
-            }
-
-            // 3. Execute and return results
             $stmt->execute();
             $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
@@ -521,7 +572,9 @@ class ProductAPI {
                 'status' => 'success',
                 'count' => count($products),
                 'products' => $products,
-                'requires_login' => false
+                'requires_login' => false,
+                'guest_views' => $isGuest ? $currentViews : null,
+                'guest_view_limit' => $isGuest ? $viewLimit : null
             ]);
 
         } catch (Exception $e) {
@@ -948,130 +1001,129 @@ class ProductAPI {
 
     //works
     function trackClick(int $userID, int $tyreID): void {
-        try {
-            $stmt = $this->connection->prepare("
-                INSERT INTO click_events (user_id, tyre_id, clicked_at)
-                VALUES (?, ?, NOW())
-            ");
+    try {
+        $stmt = $this->connection->prepare("
+            INSERT INTO click_events (user_id, tyre_id, clicked_at)
+            VALUES (?, ?, NOW())
+        ");
 
-            if (!$stmt) {
-                throw new Exception("Failed to prepare click insert: " . $this->connection->error);
-            }
-
-            $stmt->bind_param("ii", $userID, $tyreID);
-            $stmt->execute();
-            $stmt->close();
-
-            $this->sendSuccessResponse(["message" => "Click tracked successfully."]);
-        } catch (Exception $e) {
-            error_log("Click tracking error: " . $e->getMessage());
-            $this->sendErrorResponse("Failed to track click.", $e->getCode() ?: 500);
+        if (!$stmt) {
+            throw new Exception("Failed to prepare click insert: " . $this->connection->error);
         }
+
+        $stmt->bind_param("ii", $userID, $tyreID);
+        $stmt->execute();
+        $stmt->close();
+
+        $this->sendSuccessResponse(["message" => "Click tracked successfully."]);
+    } catch (Exception $e) {
+        error_log("Click tracking error: " . $e->getMessage());
+        $this->sendErrorResponse("Failed to track click.", $e->getCode() ?: 500);
     }
+}
 
     //works
-    function getClickEvents(int $currentUserID, string $currentUserRole){
-        $query = "";
-        $paramTypes = "";
-        $paramValues = [];
+function getClickEvents(int $currentUserID, string $currentUserRole){
+    $query = "";
+    $paramTypes = "";
+    $paramValues = [];
 
-        switch($currentUserRole){
-            case 'Admin':
-                // Admin sees all clicks
+    switch($currentUserRole){
+        case 'Admin':
+            // Admin sees all clicks
+            $query = "
+                SELECT 
+                    ce.click_id,
+                    ce.user_id AS customer_id,
+                    ce.tyre_id,
+                    ce.clicked_at,
+                    p.serial_num,
+                    p.original_price,
+                    p.selling_price,
+                    p.rating,
+                    p.size,
+                    p.load_index,
+                    p.has_tube,
+                    p.img_url,
+                    u.username AS customer_username
+                FROM 
+                    click_events ce
+                JOIN
+                    products p ON ce.tyre_id = p.tyre_id
+                LEFT JOIN 
+                    users u ON ce.user_id = u.user_id AND u.role = 'Customer'
+                ORDER BY
+                    ce.clicked_at ASC
+            ";
+            break;
+
+        case 'Seller':
                 $query = "
-                    SELECT 
-                        ce.click_id,
-                        ce.user_id AS customer_id,
-                        ce.tyre_id,
-                        ce.clicked_at,
-                        p.serial_num,
-                        p.original_price,
-                        p.selling_price,
-                        p.rating,
-                        p.size,
-                        p.load_index,
-                        p.has_tube,
-                        p.img_url,
-                        u.username AS customer_username
-                    FROM 
-                        click_events ce
-                    JOIN
-                        products p ON ce.tyre_id = p.tyre_id
-                    LEFT JOIN 
-                        users u ON ce.user_id = u.user_id AND u.role = 'Customer'
-                    ORDER BY
-                        ce.clicked_at ASC
+                SELECT
+                    p.tyre_id,
+                    p.serial_num,
+                    p.original_price,
+                    p.selling_price,
+                    p.rating,
+                    p.size,
+                    p.load_index,
+                    p.has_tube,
+                    p.img_url,
+                    COUNT(ce.click_id) AS total_clicks
+                FROM
+                    products p
+                LEFT JOIN
+                    click_events ce ON p.tyre_id = ce.tyre_id
+                WHERE
+                    p.user_id = ?
+                GROUP BY
+                    p.tyre_id, p.serial_num, p.original_price, p.selling_price,
+                    p.rating, p.size, p.load_index, p.has_tube, p.img_url
+                ORDER BY
+                    total_clicks ASC
                 ";
+                $paramTypes = "i";
+                $paramValues = [$currentUserID];
                 break;
 
-            case 'Seller':
-                    $query = "
-                    SELECT
-                        p.tyre_id,
-                        p.serial_num,
-                        p.original_price,
-                        p.selling_price,
-                        p.rating,
-                        p.size,
-                        p.load_index,
-                        p.has_tube,
-                        p.img_url,
-                        COUNT(ce.click_id) AS total_clicks
-                    FROM
-                        products p
-                    LEFT JOIN
-                        click_events ce ON p.tyre_id = ce.tyre_id
-                    WHERE
-                        p.user_id = ?
-                    GROUP BY
-                        p.tyre_id, p.serial_num, p.original_price, p.selling_price,
-                        p.rating, p.size, p.load_index, p.has_tube, p.img_url
-                    ORDER BY
-                        total_clicks ASC
-                    ";
-                    $paramTypes = "i";
-                    $paramValues = [$currentUserID];
-                    break;
+        case 'Customer':
+            $this->sendErrorResponse("Customers do not have access to this.", 403);
+            return;
 
-            case 'Customer':
-                $this->sendErrorResponse("Customers do not have access to this.", 403);
-                return;
-
-            default:
-                $this->sendErrorResponse("Unauthorized access.", 401);
-                return;
-        }
-
-        try {
-            $stmt = $this->connection->prepare($query);
-            if ($stmt === false) {
-                throw new Exception("SQL prepare failed for getClickEvents: " . $this->connection->error, 500);
-            }
-
-            if (!empty($paramTypes)) {
-                $refs = [];
-                foreach ($paramValues as $key => $value) {
-                    $refs[$key] = &$paramValues[$key];
-                }
-                call_user_func_array([$stmt, 'bind_param'], array_merge([$paramTypes], $refs));
-            }
-
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $clickData = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
-
-            $this->sendSuccessResponse([
-                "message" => "Click data retrieved successfully.",
-                "data" => $clickData
-            ]);
-
-        } catch (Exception $e) {
-            
-            error_log("Error retrieving click data: " . $e->getMessage());
-            $this->sendErrorResponse("An error occurred while retrieving click data.", $e->getCode() ?: 500);
-        }
+        default:
+            $this->sendErrorResponse("Unauthorized access.", 401);
+            return;
     }
+
+    try {
+        $stmt = $this->connection->prepare($query);
+        if ($stmt === false) {
+            throw new Exception("SQL prepare failed for getClickEvents: " . $this->connection->error, 500);
+        }
+
+        if (!empty($paramTypes)) {
+            $refs = [];
+            foreach ($paramValues as $key => $value) {
+                $refs[$key] = &$paramValues[$key];
+            }
+            call_user_func_array([$stmt, 'bind_param'], array_merge([$paramTypes], $refs));
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $clickData = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        $this->sendSuccessResponse([
+            "message" => "Click data retrieved successfully.",
+            "data" => $clickData
+        ]);
+
+    } catch (Exception $e) {
+        error_log("Error retrieving click data: " . $e->getMessage());
+        $this->sendErrorResponse("An error occurred while retrieving click data.", $e->getCode() ?: 500);
+    }
+}
 
 
     /*
@@ -1108,39 +1160,6 @@ class ProductAPI {
         }
     }
 
-    //works
-    // public function editFAQ(int $FAQ_ID, string $Question, string $Answer): void
-    // {
-
-    //     $query = "UPDATE FAQ SET Question = ?, Answer = ? WHERE FAQ_ID = ?";
-
-    //     try {
-    //         $stmt = $this->connection->prepare($query);
-    //         if ($stmt === false) {
-    //             throw new Exception("SQL prepare failed for edit FAQ: " . $this->connection->error, 500);
-    //         }
-
-    //         $stmt->bind_param("ssi", $Question, $Answer, $FAQ_ID); 
-
-    //         if (!$stmt->execute()) {
-    //             throw new Exception("Failed to update FAQ: " . $stmt->error, 500);
-    //         }
-
-    //         if ($stmt->affected_rows === 0) {
-    //             $this->sendErrorResponse("FAQ with ID $FAQ_ID not found or no changes made.", 404);
-    //         } else {
-    //             $this->sendSuccessResponse([
-    //                 "message" => "FAQ updated successfully.",
-    //                 "faq_id" => $FAQ_ID
-    //             ]);
-    //         }
-    //         $stmt->close();
-
-    //     } catch (Exception $e) {
-    //         error_log("Error editing FAQ: " . $e->getMessage());
-    //         $this->sendErrorResponse("An error occurred while editing FAQ.", $e->getCode() ?: 500);
-    //     }
-    // }
 
     //works  - the difference between that previous one is that the userId is stored and updated according the changes made.  
     // The Admin user ID who performed the update
@@ -1280,7 +1299,7 @@ class ProductAPI {
 
 
     //works
-    public function removeFavourite(int $userId, int $tyreId) {
+        public function removeFavourite(int $userId, int $tyreId) {
     $query = "DELETE FROM favourites WHERE user_id = ? AND tyre_id = ?";
 
     try {
@@ -1314,8 +1333,8 @@ class ProductAPI {
     }
 }
 
-//works
-public function getFavourites(int $userId): void
+    //works
+    public function getFavourites(int $userId): void
 {
     $query = "
         SELECT
@@ -1329,7 +1348,6 @@ public function getFavourites(int $userId): void
             p.serial_num,
             p.original_price,
             p.selling_price,
-            p.rating,
             p.img_url,
             u.username AS seller_username,
             u.email AS seller_email
@@ -1370,12 +1388,118 @@ public function getFavourites(int $userId): void
             "message" => "Favourite products retrieved successfully.",
             "data" => $favourites
         ]);
-
     } catch (Exception $e) {
         error_log("Error retrieving favourites: " . $e->getMessage());
         $this->sendErrorResponse("An error occurred while retrieving favourites.", $e->getCode() ?: 500);
     }
 }
+
+    public function submitRating($data) {
+        try {
+            // Verify user
+            if (!isset($data['api_key'])) {
+                throw new Exception("API key required", 401);
+            }
+
+            $user = $this->verifyApiKey($data['api_key']);
+            if (!$user) {
+                throw new Exception("Invalid API key", 401);
+            }
+
+            // Check if user is a customer
+            if ($user['role'] !== 'Customer') {
+                throw new Exception("Only customers can submit ratings", 403);
+            }
+
+            // Validate input
+            if (!isset($data['tyre_id']) || !isset($data['rating'])) {
+                throw new Exception("Missing required fields: tyre_id and rating", 400);
+            }
+
+            $tyreId = (int)$data['tyre_id'];
+            $rating = min(max((int)$data['rating'], 1), 5); // Clamp 1-5
+            $description = $data['description'] ?? null;
+
+            // Use INSERT ... ON DUPLICATE KEY UPDATE
+            $stmt = $this->connection->prepare(
+                "INSERT INTO rates 
+                (user_id, tyre_id, rating, description) 
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    rating = VALUES(rating),
+                    description = VALUES(description)"
+            );
+            
+            if (!$stmt) {
+                throw new Exception("Database prepare failed: " . $this->connection->error, 500);
+            }
+
+            $stmt->bind_param(
+                "iiis", 
+                $user['user_id'], 
+                $tyreId,
+                $rating,
+                $description
+            );
+            $stmt->execute();
+
+            // Update product's average rating
+            $this->updateProductRating($tyreId);
+
+            $this->sendSuccessResponse([
+                'status' => 'success',
+                'action' => ($stmt->affected_rows > 1) ? 'updated' : 'created'
+            ]);
+
+        } catch (Exception $e) {
+            $this->sendErrorResponse($e->getMessage(), $e->getCode());
+        }
+    }
+
+    private function updateProductRating($tyreId) {
+        $stmt = $this->connection->prepare(
+            "UPDATE products p
+            SET p.rating = COALESCE(
+                (SELECT ROUND(AVG(r.rating), 1) 
+                FROM rates r 
+                WHERE r.tyre_id = ?
+            ), 0)
+            WHERE p.tyre_id = ?"
+        );
+        $stmt->bind_param("ii", $tyreId, $tyreId);
+        $stmt->execute();
+    }
+
+    //works
+    public function getProductRating($data) {
+        try {
+            if (!isset($data['tyre_id'])) {
+                throw new Exception("tyre_id parameter required", 400);
+            }
+
+            $tyreId = (int)$data['tyre_id'];
+
+            $stmt = $this->connection->prepare(
+                "SELECT 
+                    ROUND(AVG(rating), 1) as average_rating,
+                    COUNT(*) as rating_count
+                FROM rates 
+                WHERE tyre_id = ?"
+            );
+            $stmt->bind_param("i", $tyreId);
+            $stmt->execute();
+            $result = $stmt->get_result()->fetch_assoc();
+
+            $this->sendSuccessResponse([
+                'status' => 'success',
+                'average_rating' => (float)$result['average_rating'] ?? 0,
+                'rating_count' => (int)$result['rating_count']
+            ]);
+
+        } catch (Exception $e) {
+            $this->sendErrorResponse($e->getMessage(), $e->getCode());
+        }
+    }
 
 
 
