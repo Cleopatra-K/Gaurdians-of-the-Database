@@ -190,7 +190,7 @@ if (isset($_SESSION['api_key'])) {
                     </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p class="no-reviews">No reviews yet. Be the first to review!</p>
+                <div id="tyre-reviews-container" data-tyre-id="<?= $productData['tyre_id'] ?>"></div>
             <?php endif; ?>
         </div>
     </div>

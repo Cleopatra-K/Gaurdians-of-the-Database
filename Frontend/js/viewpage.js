@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
+
+    
     // Handle favorite button click
     document.querySelectorAll('.favorite-form').forEach(form => {
         form.addEventListener('submit', async (e) => {
@@ -136,6 +138,12 @@ document.addEventListener('DOMContentLoaded', function () {
         fetchTyreById(tyreId);
     }
 
+    const tyreIdForReviews = document.querySelector('#tyre-reviews-container')?.dataset.tyreId;
+    if (tyreIdForReviews) {
+        fetchAllReviews(tyreIdForReviews);
+    }
+
+
     async function fetchTyreById(tyreId) {
         try {
             const response = await fetch('../../GOTapi.php', {
@@ -160,5 +168,61 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('An error occurred while fetching tyre details');
         }
     }
+
+    async function fetchAllReviews(tyreId) {
+        try {
+            const response = await fetch('../../GOTapi.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: 'GetAllProductRatings',
+                    tyre_id: tyreId
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                displayReviews(result.ratings || []);  // Changed from result.reviews to result.ratings
+            } else {
+                alert('Failed to fetch reviews: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Review fetch error:', error);
+            alert('An error occurred while fetching reviews');
+        }
+    }
+
+    function displayReviews(ratings) {  // Changed parameter name from reviews to ratings
+        const container = document.getElementById('tyre-reviews-container');
+        container.innerHTML = ''; // Clear existing content
+
+        if (ratings.length === 0) {
+            container.innerHTML = '<p>No reviews available for this tyre yet.</p>';
+            return;
+        }
+
+        ratings.forEach(rating => {  // Changed from review to rating
+            const reviewElement = document.createElement('div');
+            reviewElement.classList.add('tyre-review');
+
+            const stars = '★'.repeat(rating.rating) + '☆'.repeat(5 - rating.rating);
+            const user = rating.username || 'Anonymous';  // Changed from review.user to rating.username
+
+            reviewElement.innerHTML = `
+                <div class="review-header">
+                    <strong>${user}</strong> <span class="stars" style="color:#f39c12">${stars}</span>
+                </div>
+                <p class="review-description">${rating.description || ''}</p>
+                <hr>
+            `;
+
+            container.appendChild(reviewElement);
+        });
+    }
+
+
 
 });
