@@ -426,3 +426,28 @@ body.dark-theme .login-prompt a {
     font-size: 1rem;
     margin-bottom: 0.5rem;
 }
+
+.back-button-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    text-decoration: none;
+    margin-bottom: 20px;
+}
+
+.back-button i {
+    font-size: 0.9em;
+}
+
+/* Optional: Add hover effect */
+.back-button:hover {
+    background-color: #505F6B;
+    transform: translateY(-2px);
+}
