@@ -135,3 +135,34 @@ select, input[type="text"] {
     border-radius: 5px;
     border: 1px solid #ddd;
 }
+
+/* Filter container */
+.f-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 20px;
+    background: #f5f5f5;
+    margin: 20px;
+    border-radius: 8px;
+}
+
+/* Product grid */
+.products {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.filter-dropdown {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+}
+
+.filter-dropdown select {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}

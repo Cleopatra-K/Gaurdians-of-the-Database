@@ -112,7 +112,6 @@ returns (if guest has remaining views):
             "load_index": 91,
             "has_tube": false,
             "serial_num": "TYRE12345",
-            "rating": "A",
             "img_url": "/images/tyre1.jpg"
         },
         // ... more products
@@ -518,7 +517,6 @@ returns:
             "load_index": [value],
             "has_tube": [bool_value],
             "generic_serial_num": " ",
-            "rating": [value],
             "img_url": " "
             },
             // ... more products
@@ -528,6 +526,7 @@ returns:
 18. submitRating
 Description: this function will allow users to add a rating.
 - if the same user rates a product, a new entry is not added instead the old rating is updated by calling updateProductRating function
+- only customers can rate products
 Type: SubmitRating
 
 {
