@@ -1311,6 +1311,28 @@ function getClickEvents(int $currentUserID, string $currentUserRole){
             return;
         }
 
+        // First check if already favorited
+        $checkFavQuery = "SELECT COUNT(*) FROM favourites WHERE user_id = ? AND tyre_id = ?";
+        $stmtCheckFav = $this->connection->prepare($checkFavQuery);
+        if ($stmtCheckFav === false) {
+            throw new Exception("SQL prepare failed for favourite check: " . $this->connection->error, 500);
+        }
+        $stmtCheckFav->bind_param("ii", $userId, $tyreId);
+        $stmtCheckFav->execute();
+        $resultCheckFav = $stmtCheckFav->get_result();
+        $favRow = $resultCheckFav->fetch_row();
+        $stmtCheckFav->close();
+
+        if ($favRow[0] > 0) {
+            $this->sendSuccessResponse([
+                "message" => "Tyre is already in your favourites.",
+                "already_favorited" => true,
+                "user_id" => $userId,
+                "tyre_id" => $tyreId
+            ], 200);
+            return;
+        }
+
         $query = "INSERT INTO favourites (user_id, tyre_id, created_at) VALUES (?, ?, NOW())";
 
         try {
@@ -1322,13 +1344,9 @@ function getClickEvents(int $currentUserID, string $currentUserRole){
             $stmt->bind_param("ii", $userId, $tyreId);
 
             if (!$stmt->execute()) {
-                if ($this->connection->errno == 1062) {
-                    $this->sendErrorResponse("Tyre ID $tyreId is already in user's favourites.", 409);
-                } else {
-                    $errorMsg = "Failed to add favourite: (" . $this->connection->errno . ") " . $stmt->error;
-                    error_log($errorMsg);
-                    $this->sendErrorResponse("An error occurred while adding favourite: " . $errorMsg, 500);
-                }
+                $errorMsg = "Failed to add favourite: (" . $this->connection->errno . ") " . $stmt->error;
+                error_log($errorMsg);
+                $this->sendErrorResponse("An error occurred while adding favourite: " . $errorMsg, 500);
             } else {
                 $this->sendSuccessResponse([
                     "message" => "Tyre added to favourites successfully.",
