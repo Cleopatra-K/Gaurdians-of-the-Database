@@ -290,13 +290,13 @@ function sendToAPI(userData) {
                 // Redirect after a short delay based on the role
                 setTimeout(() => {
                     if (userData.role === 'Seller') {
-                        window.location.href = 'sellers.php'; // Assuming admins go to admin page
+                        window.location.href = '../php/sellers.php'; // Assuming admins go to admin page
                     } else if (userData.role === 'Customer') {
-                        window.location.href = 'index.php'; // Assuming customers go to index
+                        window.location.href = '../php/index.php'; // Assuming customers go to index
                     } else if (userData.role === 'Admin') {
-                        window.location.href = 'admin.php'; // Assuming admins go to admin page
+                        window.location.href = '../php/admin.php'; // Assuming admins go to admin page
                     } else {
-                        window.location.href = 'index.php'; // Default fallback
+                        window.location.href = '../php/index.php'; // Default fallback
                     }
                 }, 5000);
             } else {
