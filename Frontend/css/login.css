@@ -1,5 +1,5 @@
 body {
-    background-color: #B7C9E2; /* Light blue-gray */
+    background-color: #f4f7f9; /* Light blue-gray */
     text-align: center;
     display: flex;
     justify-content: center;
@@ -14,11 +14,10 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 150px;
+    margin-top: 175px;
 }
 
 .welcome.container h2 {
-    font-family: 'Playfair Display', serif;
     letter-spacing: -1px;
     text-align: center;
     margin-bottom: 0.225px;
@@ -40,11 +39,11 @@ body {
 }
 
 .slogan {
-    margin-top: 10px;
+    margin-top: 15px;
 }
 
 .button {
-    margin-top: -280px;
+    margin-top: -145px;
 }
 
 a {
@@ -54,12 +53,12 @@ a {
 
 /* Button Styling */
 .btn-style {
-    font-family: 'Playfair Display', serif;
     font-size: 18px;
     font-weight: 500;
-    background-color: #36454F; /* Dark Grey - Charcoal */
-    color: #F5F5F5; /* Very light grey for text */
-    border: 2px solid #36454F; /* Same dark grey for border */
+    background-color: #2f95a7; /* Dark Grey - Charcoal */
+    color: #fff; /* Very light grey for text */
+    /* border: 2px solid #36454F; Same dark grey for border */
+    border-radius: 5px;
     padding: 10px;
     border-radius: 25px;
     cursor: pointer;
@@ -69,7 +68,7 @@ a {
 }
 
 .btn-style:hover {
-    background-color: #505F6B; /* Slightly lighter dark grey on hover */
+    background-color: #1f2f40; /* Slightly lighter dark grey on hover */
     color: #FFFFFF; /* White text on hover */
     transform: translateY(-4px); /* Slightly more pronounced lift on hover */
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* Even stronger shadow on hover */
