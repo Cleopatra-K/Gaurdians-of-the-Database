@@ -152,9 +152,9 @@ function sendToAPILogin(username, password) { // Function now accepts username
             localStorage.setItem('userRole', data.user.role); // Save role
 
             if (data.user.role === 'Seller') {
-                window.location.href = 'sellers.php';
+                window.location.href = '../php/sellers.php';
             } else if (data.user.role === 'Customer') {
-                window.location.href = 'index.php';
+                window.location.href = '../php/index.php';
             } else if (data.user.role === 'Admin') {
                 window.location.href = 'admin.php'; // Assuming an admin page
             } else {
