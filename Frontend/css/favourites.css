@@ -1,0 +1,73 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #e6f0ff;
+    padding: 30px;
+    color: #003366;
+    margin: 0;
+}
+
+h1 {
+    font-size: 3rem;
+    text-align: center;
+    margin-bottom: 40px;
+    color: #004aad;
+    text-shadow: 1px 1px 3px rgba(0, 0, 77, 0.3);
+}
+
+#favouritesTable {
+    border-collapse: collapse;
+    width: 100%; /* Increased from 90% */
+    max-width: 2000px; /* Increased max-width */
+    margin: 0 auto;
+    box-shadow: 0 6px 16px rgba(0, 0, 77, 0.25);
+    background-color: #f0f7ff;
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 1.2rem; /* Slightly larger text */
+}
+
+#favouritesTable th,
+#favouritesTable td {
+    border: 1px solid #a3c1ff;
+    padding: 20px 24px;
+    text-align: center;
+}
+
+#favouritesTable th {
+    background-color: #4a76ff;
+    color: white;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    font-size: 1.5rem;
+}
+
+#favouritesTable tbody tr:nth-child(even) {
+    background-color: #d6e4ff;
+}
+
+#favouritesTable tbody tr:hover {
+    background-color: #aec8ff;
+    cursor: pointer;
+}
+
+button {
+    padding: 8px 16px; /* Slightly bigger buttons */
+    background-color: #ff4d4d;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: #cc0000;
+}
+
+#favouritesTable img.tyre-img {
+    width: 100px; /* Increased image size */
+    height: auto;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
