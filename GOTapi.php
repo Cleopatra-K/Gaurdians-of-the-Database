@@ -242,6 +242,9 @@ class ProductAPI {
                 case 'GetProductRating':
                     $this->getProductRating($data);
                     break;
+                case 'GetAllProductRatings':
+                    $this-> getAllProductRatings($data);
+                    break;
                 default:
                     throw new Exception("Invalid request type: " . $requestType, 400);
                     break;
@@ -249,7 +252,6 @@ class ProductAPI {
         } catch (Exception $e) {
             $this->sendErrorResponse($e->getMessage(), $e->getCode() ?: 500);
         }
-        
     }
 
     //helper function 
@@ -1566,6 +1568,53 @@ function getClickEvents(int $currentUserID, string $currentUserRole){
         }
     }
 
+    public function getAllProductRatings($data)
+    {
+        try {
+            if (!isset($data['tyre_id'])) {
+                throw new Exception("tyre_id parameter required", 400);
+            }
+
+            $tyreId = (int)$data['tyre_id'];
+
+            $stmt = $this->connection->prepare(
+                "SELECT 
+                    r.user_id,
+                    u.username,
+                    r.rating,
+                    r.description
+                FROM rates r
+                JOIN users u ON r.user_id = u.user_id
+                WHERE r.tyre_id = ?
+                ORDER BY r.tyre_id DESC"
+            );
+            
+            if ($stmt === false) {
+                throw new Exception("Failed to prepare statement: " . $this->connection->error, 500);
+            }
+
+            $stmt->bind_param("i", $tyreId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $ratings = [];
+            while ($row = $result->fetch_assoc()) {
+                $ratings[] = [
+                    'user_id' => (int)$row['user_id'],
+                    'username' => $row['username'],  // Include username in response
+                    'rating' => (float)$row['rating'],
+                    'description' => $row['description']
+                ];
+            }
+
+            $this->sendSuccessResponse([
+                'status' => 'success',
+                'ratings' => $ratings
+            ]);
+        } catch (Exception $e) {
+            $this->sendErrorResponse($e->getMessage(), $e->getCode());
+        }
+    }
 
 
     public function sendSuccessResponse($data, $statusCode = 200) {
