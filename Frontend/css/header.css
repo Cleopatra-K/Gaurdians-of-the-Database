@@ -1,0 +1,77 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Navbar Container */
+.navbar {
+    background-color: #3a3f47;  /* Dark teal/navy background */
+    padding: 0rem 0.5rem;
+    font-family: 'Playfair Display', serif;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Navigation Links List */
+.nav-links {
+    list-style: none;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12rem;
+}
+
+/* Navigation Items */
+.nav-links li {
+    display: inline-block;
+    padding: 0 0.5rem;
+}
+
+/* Navigation Anchor Links */
+.nav-links a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 2rem;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #00c49a;
+}
+
+
+/* Logout Button */
+.logout-btn {
+    background-color: transparent;
+    color: #ffffff;
+    border: none;
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 2rem;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.logout-btn:hover {
+    background-color: #ffffff;
+    color: #002f34;
+}
+
+/* Responsive Nav (basic) */
+@media (max-width: 768px) {
+    .nav-links {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .navbar {
+        padding: 1rem;
+    }
+
+    .logout-btn {
+        width: 100%;
+        text-align: left;
+    }
+}
