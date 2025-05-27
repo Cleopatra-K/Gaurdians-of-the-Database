@@ -1,11 +1,12 @@
 // for login form only
 document.addEventListener("DOMContentLoaded", function () {
-
     const loginForm = document.getElementById("login-form");
+    console.log("DEBUG(JS - Login Init): DOMContentLoaded fired. Login form element found:", !!loginForm);
 
     if (loginForm) {
         loginForm.addEventListener("submit", function (l) {
-            l.preventDefault(); 
+            l.preventDefault();
+            console.log("DEBUG(JS - Login Init): Login form submission intercepted.");
             validateLoginF();
         });
     }
@@ -13,18 +14,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
 //Email validation
 function validatorOfEmail(email) {
+    console.log("DEBUG(JS - Login): Validating email format for:", email);
     const emailR = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
     return emailR.test(email);
 }
 
 //Password validator
 function validatorOfPassword(password) {
+    console.log("DEBUG(JS - Login): Validating password strength.");
     const passwordR = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return passwordR.test(password);
 }
 
-
 function clearErrors(formId) {
+    console.log("DEBUG(JS - Login): Clearing errors for form:", formId);
     let errorMsgElement;
     if (formId === 'login-form') {
         errorMsgElement = document.getElementById('login-error-messages');
@@ -35,6 +38,9 @@ function clearErrors(formId) {
     if (errorMsgElement) {
         errorMsgElement.innerHTML = ''; // Clear content
         errorMsgElement.style.display = 'none'; // **Hide the container when empty**
+        console.log("DEBUG(JS - Login): Error messages cleared and container hidden for", formId);
+    } else {
+        console.log("DEBUG(JS - Login): No error message element found for", formId, "to clear.");
     }
 }
 
@@ -44,6 +50,7 @@ function clearErrors(formId) {
  * @param {string} formId - The ID of the form ('login-form' or 'signup-form').
  */
 function displayErrors(errors, formId) {
+    console.log("DEBUG(JS - Login): Displaying errors for form:", formId, "Errors:", errors);
     let errorMsgElement;
     if (formId === 'login-form') {
         errorMsgElement = document.getElementById('login-error-messages');
@@ -57,6 +64,7 @@ function displayErrors(errors, formId) {
         errorMsgElement.id = (formId === 'login-form') ? 'login-error-messages' : 'error-messages';
         // Append it to the form
         document.getElementById(formId).prepend(errorMsgElement);
+        console.log("DEBUG(JS - Login): Created new error message element:", errorMsgElement.id);
     }
 
     // Always apply these styles to ensure visibility and consistent appearance
@@ -74,49 +82,49 @@ function displayErrors(errors, formId) {
 
     // Populate with error messages
     errorMsgElement.innerHTML = errors.map(error => `<p>${error}</p>`).join('');
+    console.log("DEBUG(JS - Login): Error messages populated for", formId);
 }
 
 function validateLoginF() {
-
-    let username = document.querySelector('input[name="login-username"]').value.trim(); 
+    console.log("DEBUG(JS - Login): Starting validateLoginF().");
+    let username = document.querySelector('input[name="login-username"]').value.trim();
     let password = document.querySelector('input[name="login-password"]').value.trim();
+
+    console.log("DEBUG(JS - Login): Collected login credentials - Username:", username, "Password (length):", password.length);
 
     let errors = [];
 
     if (!username) {
         errors.push('Username is required.');
-    } 
+    } // No specific format validation for username unless your backend has one
 
-    if (!password) { // Added explicit check for empty password
+    if (!password) {
         errors.push('Password is required.');
     } else if (!validatorOfPassword(password)) {
-
         errors.push('Password must be at least 8 characters, contain uppercase, lowercase, a digit, and a symbol.');
     }
 
     if (errors.length > 0) {
+        console.log("DEBUG(JS - Login): Login validation failed. Errors:", errors);
         displayErrors(errors, 'login-form');
     } else {
-        // Clear previous errors when submitting
-        const errorMsgElement = document.getElementById('login-error-messages');
-        if (errorMsgElement) {
-            errorMsgElement.innerHTML = '';
-        }
+        console.log("DEBUG(JS - Login): Login validation successful. Calling sendToAPILogin().");
+        clearErrors('login-form'); // Clear previous errors when submitting
         sendToAPILogin(username, password); // Pass username and password
     }
 }
 
 
 function sendToAPILogin(username, password) { // Function now accepts username
-    console.log("Attempting login with username:", username);
+    console.log("DEBUG(JS - Login): Attempting login with username:", username);
     const payload = {
         username: username, // Send username
         password: password,
         type: 'Login'
     };
-    console.log("Login Payload:", payload);
+    console.log("DEBUG(JS - Login): Login Payload sent to API:", payload);
 
-    fetch('http://localhost/GA221/api.php', {
+    fetch('/GotD/GOTapi.php', { // Ensure this path is correct for your setup!
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -124,49 +132,71 @@ function sendToAPILogin(username, password) { // Function now accepts username
         body: JSON.stringify(payload) // Send the payload object
     })
     .then(response => {
-        // Check if response is OK (200-299) before trying to parse JSON
+        console.log("DEBUG(JS - Login): Login fetch response status:", response.status, response.statusText);
         if (!response.ok) {
             // If not OK, read the response as text to get the PHP error message
             return response.json().then(errorData => {
-                // If backend sent JSON error, throw it
+                console.error("DEBUG(JS - Login): Login API returned error JSON:", errorData);
                 throw new Error(errorData.message || 'Login failed with an unexpected error.');
             }).catch(() => {
-                throw new Error('Incorrect username or email. Please try again.');
+                console.error("DEBUG(JS - Login): Login API returned non-JSON error (check PHP logs for raw output).");
+                throw new Error('Incorrect username or password. Please try again.'); // Generic error for non-JSON
             });
         }
         return response.json(); // Parse JSON if response is OK
     })
     .then(data => {
-        console.log("Login response:", data);
+        console.log("DEBUG(JS - Login): Login API success response data:", data);
 
-        
         // Check for 'user' object to confirm success
-        if (data && data.user) { 
+        if (data && data.user) {
             alert('Login successful!');
-            console.log("API Key received:", data.api_key); // Directly access data.api_key
-            localStorage.setItem('userApiKey', data.api_key); // Store the API key
-            // Use user.name and user.role from the 'user' object
-            localStorage.setItem('userName', data.user.name + ' ' + (data.user.surname || '')); 
-            localStorage.setItem('userRole', data.user.role); // Save role
+            console.log("DEBUG(JS - Login): User object found in login response:", data.user);
 
-            if (data.user.role === 'Seller') {
+            const userIdFromAPI = data.user.user_id || data.user.id || data.user_id || data.id; // Try multiple paths for user ID
+            const userApiKeyFromAPI = data.api_key;
+            const userNameFromAPI = data.user.name + ' ' + (data.user.surname || '');
+            const userRoleFromAPI = data.user.role;
+
+            console.log("DEBUG(JS - Login): Extracted user_id for sessionStorage:", userIdFromAPI);
+            console.log("DEBUG(JS - Login): Extracted userApiKey for sessionStorage:", userApiKeyFromAPI);
+            console.log("DEBUG(JS - Login): Extracted userName for sessionStorage:", userNameFromAPI);
+            console.log("DEBUG(JS - Login): Extracted userRole for sessionStorage:", userRoleFromAPI);
+
+            sessionStorage.setItem('user_id', userIdFromAPI);
+            sessionStorage.setItem('userApiKey', userApiKeyFromAPI);
+            sessionStorage.setItem('userName', userNameFromAPI);
+            sessionStorage.setItem('userRole', userRoleFromAPI);
+
+            console.log("DEBUG(JS - Login): sessionStorage **after** setting values:");
+            console.log("user_id:", sessionStorage.getItem('user_id'));
+            console.log("userApiKey:", sessionStorage.getItem('userApiKey'));
+            console.log("userName:", sessionStorage.getItem('userName'));
+            console.log("userRole:", sessionStorage.getItem('userRole'));
+
+            // Redirect based on role
+            if (userRoleFromAPI === 'Seller') {
+                console.log("DEBUG(JS - Login): Redirecting to sellers.php.");
                 window.location.href = '../php/sellers.php';
-            } else if (data.user.role === 'Customer') {
-                window.location.href = '../php/index.php';
-            } else if (data.user.role === 'Admin') {
-                window.location.href = 'admin.php';
+            } else if (userRoleFromAPI === 'Customer') {
+                console.log("DEBUG(JS - Login): Redirecting to products.php.");
+                window.location.href = '../php/products.php';
+            } else if (userRoleFromAPI === 'Admin') {
+                console.log("DEBUG(JS - Login): Redirecting to admin.php.");
+                window.location.href = 'admin.php'; // Assuming an admin page relative to the current path
             } else {
-                window.location.href = 'index.php'; 
+                console.log("DEBUG(JS - Login): Redirecting to products.php (default fallback).");
+                window.location.href = 'products.php'; // Default fallback
             }
 
         } else {
             // The PHP error handler should send 'message' on failure
-            console.log("Login failed with message:", data.message);
+            console.log("DEBUG(JS - Login): Login failed, no user object found in response. Message:", data.message);
             displayErrors([data.message || "Login failed. Please check your credentials."], 'login-form');
         }
     })
     .catch(error => {
-        console.error("Fetch or API processing error:", error);
+        console.error("DEBUG(JS - Login): Fetch or API processing error during login:", error);
         displayErrors([error.message || "An unexpected error occurred during login. Please try again."], 'login-form');
     });
 }

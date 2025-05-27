@@ -1,8 +1,8 @@
-
 var apiBase = '../GOTapi.php';
 
 var products = [];
-var favourites = {};
+var favourites = {}; // Re-added: To store favourite status
+var apiKey = sessionStorage.getItem('userApiKey'); // Keep this for general authentication
 var userRole = null;
 var isGuest = true;
 var guestViewLimit = 20;
@@ -14,29 +14,16 @@ var currencySelect = document.getElementById('currency-select');
 var filterForm = document.getElementById('filter-form');
 var searchInput = document.getElementById('search-input');
 var sortSelect = document.getElementById('sort-select');
-var favouritesBtn = document.getElementById('show-favourites-btn');
+// favouritesBtn is NOT re-added here as the "See My Favourites" button is removed from products.php
+// var favouritesBtn = document.getElementById('show-favourites-btn');
 var loadMoreBtn = document.getElementById('load-more-btn');
 
 var productsPerPage = 10;   // number of products per batch
 var productsShown = 0;      // how many currently shown
 
-// function apiFetch(data) {
-//     var body = JSON.stringify(data);
-//     var headers = { 'Content-Type': 'application/json' };
-//     if (apiKey) headers['X-API-Key'] = apiKey;
-
-//     return fetch(apiBase, {
-//         method: 'POST',
-//         headers: headers,
-//         body: body
-//     }).then(function(res) {
-//         return res.json();
-//     });
-// }
-
 function apiFetch(data) {
     var headers = { 'Content-Type': 'application/json' };
-    if (apiKey) headers['X-API-Key'] = apiKey;
+    if (apiKey) headers['X-API-Key'] = apiKey; // Ensure API key is sent with all requests
 
     return fetch(apiBase, {
         method: 'POST',
@@ -45,6 +32,16 @@ function apiFetch(data) {
     }).then(function(res) {
         if (!res.ok) {
             return res.json().then(function(err) {
+                // Handle specific API key/login errors
+                if (err.message && (err.message.includes('Invalid API key') || err.message.includes('not logged in'))) {
+                    console.warn('API Key invalid/session expired. Clearing session.');
+                    sessionStorage.removeItem('userApiKey');
+                    sessionStorage.removeItem('user_id');
+                    sessionStorage.removeItem('userRole');
+                    sessionStorage.removeItem('username');
+                    alert('Your session has expired. Please log in again.');
+                    window.location.href = 'login.php'; // Redirect to login
+                }
                 throw new Error(err.message || 'Unknown error from server.');
             }).catch(function() {
                 throw new Error('Failed to connect to the API.');
@@ -56,18 +53,20 @@ function apiFetch(data) {
 
 function loadProducts(options) {
     options = options || {};
-    var onlyFavourites = options.onlyFavourites || false;
+    // 'onlyFavourites' parameter is no longer used for filtering display on this page,
+    // but the original `loadProducts` function might have relied on its presence, so leaving it for now.
+    // var onlyFavourites = options.onlyFavourites || false;
 
     var requestData = {
         type: 'GetAllProducts',
-        api_key: apiKey
+        api_key: apiKey // Always send apiKey for GetAllProducts
     };
 
     return apiFetch(requestData)
         .then(function(response) {
             if (response.status === 'error') {
                 if (response.requires_login) {
-                    alert('Guest view limit reached. Please log in to continue browsing.');
+                    alert('Guest view limit reached. Please log in to continue Browse.');
                     window.location.href = 'signup.php';
                 } else {
                     alert('Error loading products: ' + response.message);
@@ -80,18 +79,18 @@ function loadProducts(options) {
             guestViewsUsed = response.guest_views || 0;
             guestViewLimit = response.guest_view_limit || 50;
 
-            if (onlyFavourites && apiKey) {
+            // Load favourites AFTER products are loaded, if user is logged in
+            if (apiKey) {
                 return loadFavourites().then(function() {
-                    products = products.filter(function(p) {
-                        return favourites[p.tyre_id];
-                    });
-                    filteredProducts = products; // reset filteredProducts to favourites
-                    productsShown = productsPerPage; // reset pagination
+                    // No filtering by favourites here, just load and then render normally
+                    filteredProducts = products;
+                    productsShown = productsPerPage;
                     renderProducts(filteredProducts);
                 });
             } else {
-                filteredProducts = products; // reset filteredProducts on full load
-                productsShown = productsPerPage; // reset pagination
+                // If not logged in, just render products without favourite status
+                filteredProducts = products;
+                productsShown = productsPerPage;
                 renderProducts(filteredProducts);
             }
         })
@@ -100,34 +99,40 @@ function loadProducts(options) {
         });
 }
 
+// Re-added: Function to load user's favourites
 function loadFavourites() {
-    if (!apiKey) return Promise.resolve();
+    if (!apiKey) {
+        favourites = {}; // Ensure favourites object is empty if no API key
+        return Promise.resolve(); // Resolve immediately if not logged in
+    }
 
+    // Pass user_id for getFavourites if your API requires it, otherwise api_key is enough.
+    // Assuming your API can derive user_id from api_key as done in favourites.js
     return apiFetch({ type: 'getFavourites', api_key: apiKey })
         .then(function(response) {
             if (response.status === 'error') {
                 console.warn('Failed to load favourites:', response.message);
-                favourites = {};
-                if (response.message.includes('Invalid API key') || response.message.includes('not logged in')) {
-                    alert('Your session has expired. Please log in again.');
-                    // Redirect to login or clear session:
-                    sessionStorage.removeItem('userApiKey');
-                    window.location.href = 'login.php'; // Or your login page
-                }
+                favourites = {}; // Clear favourites if there's an error
+                // Specific API key/login errors are handled in apiFetch, so no need to repeat alert/redirect here.
                 return;
             }
 
             favourites = {};
-            var favs = response.data || [];
+            // Corrected from response.data to response.favourites as per your API output
+            var favs = response.favourites || [];
             for (var i = 0; i < favs.length; i++) {
                 favourites[favs[i].tyre_id] = true;
             }
+        })
+        .catch(function(err) {
+            console.error('Error loading favourites:', err);
+            favourites = {}; // Ensure favourites is empty on network errors too
         });
 }
 
+// Re-added: Function to toggle favourite status
 function toggleFavourite(tyreId) {
-    var currapiKey = sessionStorage.getItem('userApiKey');
-    if (!currapiKey) {
+    if (!apiKey) { // Use the global apiKey variable
         alert('Please log in to manage favourites.');
         return;
     }
@@ -135,21 +140,24 @@ function toggleFavourite(tyreId) {
     var isFav = favourites[tyreId];
     var type = isFav ? 'removeFavourite' : 'addFavourite';
 
-    apiFetch({ type: type, tyre_id: tyreId, api_key: currapiKey })
+    apiFetch({ type: type, tyre_id: tyreId, api_key: apiKey }) // Use global apiKey
         .then(function(response) {
             if (response.status === 'success') {
                 if (isFav) {
                     delete favourites[tyreId];
+                    alert("Tyre removed from favourites."); // Optional: provide feedback
                 } else {
                     favourites[tyreId] = true;
+                    alert("Tyre added to favourites!"); // Optional: provide feedback
                 }
-                renderProducts(filteredProducts); // re-render filtered products to reflect change
+                renderProducts(filteredProducts); // Re-render to update star icon
             } else {
                 alert('Error updating favourites: ' + response.message);
             }
         })
         .catch(function(err) {
             console.error('Favourite update failed', err.message || err);
+            alert('Network error or server problem when updating favourite.');
         });
 }
 
@@ -157,20 +165,17 @@ function convertPrice(originalPrice) {
     return Number(originalPrice).toFixed(2);
 }
 
-// Filtering, searching, and sorting logic
-var filteredProducts = [];  // holds currently displayed products after filter/search/sort
+var filteredProducts = [];
 
 function applyFilters(productsToFilter) {
-  return productsToFilter;
+    return productsToFilter;
 }
-
 
 function applySearch(productsToSearch) {
     var searchTerm = searchInput.value.toLowerCase().trim();
     if (!searchTerm) return productsToSearch;
 
     return productsToSearch.filter(function(p) {
-        // Search in tyre_id, size, serial_num, seller name, brand, category (example)
         return (
             (p.tyre_id && p.tyre_id.toString().indexOf(searchTerm) !== -1) ||
             (p.size && p.size.toLowerCase().indexOf(searchTerm) !== -1) ||
@@ -184,7 +189,7 @@ function applySearch(productsToSearch) {
 
 function applySort(productsToSort) {
     var sortValue = sortSelect.value;
-    var sorted = productsToSort.slice(0); // copy array
+    var sorted = productsToSort.slice(0);
 
     if (sortValue === 'priceLowToHigh') {
         sorted.sort(function(a, b) {
@@ -199,13 +204,12 @@ function applySort(productsToSort) {
             return (a.seller_username || '').localeCompare(b.seller_username || '');
         });
     } else if (sortValue === 'tyreIDZtoA') {
-        sorted.sort(function(a, b) {
             return (b.seller_username || '').localeCompare(a.seller_username || '');
-        });
     }
 
     return sorted;
 }
+
 
 
 function updateProductDisplay() {
@@ -213,7 +217,7 @@ function updateProductDisplay() {
     tempProducts = applySearch(tempProducts);
     filteredProducts = applySort(tempProducts);
 
-    productsShown = productsPerPage;  // reset to first batch on filters/search/sort change
+    productsShown = productsPerPage;
     renderProducts(filteredProducts);
 }
 
@@ -226,16 +230,13 @@ function renderProducts(productsToRender) {
         return;
     }
 
-    // Maximum products guest can see
     var maxLimit = isGuest ? Math.min(guestViewLimit, productsToRender.length) : productsToRender.length;
-
-    // Number of products to actually show based on productsShown and maxLimit
     var maxToShow = Math.min(productsShown, maxLimit);
     var productsToShow = productsToRender.slice(0, maxToShow);
 
     for (var i = 0; i < productsToShow.length; i++) {
         var p = productsToShow[i];
-        var isFav = favourites[p.tyre_id];
+        var isFav = favourites[p.tyre_id]; // Re-added: Check favourite status
         var price = convertPrice(p.selling_price);
 
         var productEl = document.createElement('div');
@@ -249,20 +250,21 @@ function renderProducts(productsToRender) {
                 '<p>Seller: ' + (p.seller_username || p.seller_name || 'Unknown') + '</p>' +
                 '<p>Price: ' + price + ' ' + currentCurrency + '</p>' +
             '</a>' +
+            // Re-added: Favourite button HTML
             '<button class="fav-btn" data-id="' + p.tyre_id + '">' +
-                (isFav ? '★ Remove Favourite' : '☆ Add Favourite') +
+                (isFav ? '<i class="fas fa-star"></i> Remove Favourite' : '<i class="far fa-star"></i> Add Favourite') +
             '</button>';
 
         (function(tyreId) {
+            // Re-added: Favourite button event listener
             productEl.querySelector('.fav-btn').addEventListener('click', function(e) {
                 e.preventDefault();
-                e.stopPropagation();
+                e.stopPropagation(); // Prevent card link from being followed
                 toggleFavourite(tyreId);
             });
-            
-            // Add click handler for the entire product card if needed
+
             productEl.addEventListener('click', function(e) {
-                if (!e.target.classList.contains('fav-btn')) {
+                if (!e.target.closest('.fav-btn')) { // Ensure click isn't on the favourite button or its icon
                     window.location.href = 'viewpage.php?tyre_id=' + tyreId;
                 }
             });
@@ -271,14 +273,11 @@ function renderProducts(productsToRender) {
         productContainer.appendChild(productEl);
     }
 
-
-    // Show/hide Load More button
     if (maxToShow < maxLimit) {
         loadMoreBtn.style.display = 'block';
     } else {
         loadMoreBtn.style.display = 'none';
 
-        // Show guest limit notice
         if (isGuest && maxLimit === guestViewLimit) {
             var notice = document.createElement('p');
             notice.style.color = 'red';
@@ -289,21 +288,9 @@ function renderProducts(productsToRender) {
     }
 }
 
-
-
-favouritesBtn.addEventListener('click', function() {
-    if (!apiKey) {
-        alert('Please log in to view favourites.');
-        return;
-    }
-    loadProducts({ onlyFavourites: true });
-});
-
-
 searchInput.addEventListener('input', function() {
     updateProductDisplay();
 });
-
 
 sortSelect.addEventListener('change', function() {
     updateProductDisplay();
@@ -316,12 +303,13 @@ loadMoreBtn.addEventListener('click', function() {
 
 // Init
 function init() {
-    apiKey = sessionStorage.getItem('userApikey') || null;
+    apiKey = sessionStorage.getItem('userApiKey') || null;
     userRole = sessionStorage.getItem('userRole') || null;
     productsShown = productsPerPage;
 
     if (apiKey) {
         isGuest = false;
+        // Load favourites first, then products
         loadFavourites().then(function() {
             loadProducts().then(function() {
                 if (isGuest && guestViewsUsed >= guestViewLimit) {
@@ -331,6 +319,7 @@ function init() {
         });
     } else {
         isGuest = true;
+        // If not logged in, just load products. Favourites will be empty.
         loadProducts().then(function() {
             if (isGuest && guestViewsUsed >= guestViewLimit) {
                 alert('Guest view limit reached. Please log in for full access.');
@@ -340,4 +329,3 @@ function init() {
 }
 
 init();
-

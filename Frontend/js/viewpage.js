@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const endpointAction = action === 'add' ? 'addFavourite' : 'removeFavourite';
 
             try {
-                const response = await fetch('../../GOTapi.php', {
+                const response = await fetch('../GOTapi.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 const TyreDescription = ratingForm.querySelector('textarea[name="description"]')?.value || null;
 
-                const response = await fetch('../../GOTapi.php', {
+                const response = await fetch('../GOTapi.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function fetchTyreById(tyreId) {
         try {
-            const response = await fetch('../../GOTapi.php', {
+            const response = await fetch('../GOTapi.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function fetchAllReviews(tyreId) {
         try {
-            const response = await fetch('../../GOTapi.php', {
+            const response = await fetch('../GOTapi.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
