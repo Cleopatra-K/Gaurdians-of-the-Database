@@ -1,19 +1,15 @@
 // === CONFIG ===
-var API_BASE_URL = "/GOTapi.php";
+var API_BASE_URL = "../GOTapi.php";
 
-// TEMPORARY: Set dummy user values for testing
-// localStorage.setItem("user_id", "24");
-// localStorage.setItem("apikey", "90c948f13d59f21e076933ca766f1fa8");
-
-var apiKey = localStorage.getItem('userApiKey');
+var apiKey = sessionStorage.getItem('userApiKey');
 
 function getCurrentUserId() {
-  var userId = localStorage.getItem("user_id");
+  var userId = sessionStorage.getItem("user_id");
   return userId ? parseInt(userId) : null;
 }
 
 function getApiKey() {
-  var key = localStorage.getItem("apikey");
+  var key = apiKey
   if (!key) {
     alert("Missing API key. Please log in again.");
   }
@@ -105,8 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
     .then(res => res.json())
     .then(data => {
-      if (!data || !data.data || data.data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8">No favourite tyres found.</td></tr>`;
+if (!data || !data.favourites || data.favourites.length === 0) { // Changed data.data to data.favourites        tbody.innerHTML = `<tr><td colspan="8">No favourite tyres found.</td></tr>`;
         return;
       }
 

@@ -1,9 +1,8 @@
 
-var apiBase = '/GOTapi.php';
+var apiBase = '../GOTapi.php';
 
 var products = [];
 var favourites = {};
-var apiKey = localStorage.getItem('userApiKey');
 var userRole = null;
 var isGuest = true;
 var guestViewLimit = 20;
@@ -18,7 +17,7 @@ var sortSelect = document.getElementById('sort-select');
 var favouritesBtn = document.getElementById('show-favourites-btn');
 var loadMoreBtn = document.getElementById('load-more-btn');
 
-var productsPerPage = 20;   // number of products per batch
+var productsPerPage = 10;   // number of products per batch
 var productsShown = 0;      // how many currently shown
 
 // function apiFetch(data) {
@@ -69,6 +68,7 @@ function loadProducts(options) {
             if (response.status === 'error') {
                 if (response.requires_login) {
                     alert('Guest view limit reached. Please log in to continue browsing.');
+                    window.location.href = 'signup.php';
                 } else {
                     alert('Error loading products: ' + response.message);
                 }
@@ -108,6 +108,12 @@ function loadFavourites() {
             if (response.status === 'error') {
                 console.warn('Failed to load favourites:', response.message);
                 favourites = {};
+                if (response.message.includes('Invalid API key') || response.message.includes('not logged in')) {
+                    alert('Your session has expired. Please log in again.');
+                    // Redirect to login or clear session:
+                    sessionStorage.removeItem('userApiKey');
+                    window.location.href = 'login.php'; // Or your login page
+                }
                 return;
             }
 
@@ -120,8 +126,8 @@ function loadFavourites() {
 }
 
 function toggleFavourite(tyreId) {
-    var apiKey = localStorage.getItem('apikey');
-    if (!apiKey) {
+    var currapiKey = sessionStorage.getItem('userApiKey');
+    if (!currapiKey) {
         alert('Please log in to manage favourites.');
         return;
     }
@@ -129,7 +135,7 @@ function toggleFavourite(tyreId) {
     var isFav = favourites[tyreId];
     var type = isFav ? 'removeFavourite' : 'addFavourite';
 
-    apiFetch({ type: type, tyre_id: tyreId, api_key: apiKey })
+    apiFetch({ type: type, tyre_id: tyreId, api_key: currapiKey })
         .then(function(response) {
             if (response.status === 'success') {
                 if (isFav) {
@@ -236,23 +242,35 @@ function renderProducts(productsToRender) {
         productEl.className = 'product-card';
 
         productEl.innerHTML =
-            '<img src="' + p.img_url + '" alt="Tyre ' + p.tyre_id + '" />' +
-            '<h3>Tyre ' + p.tyre_id + ' - ' + p.size + ' ' + p.load_index + ' ' + (p.has_tube ? 'Tube' : 'Tubeless') + '</h3>' +
-            '<p>Serial: ' + p.serial_num + '</p>' +
-            '<p>Seller: ' + (p.seller_username || p.seller_name || 'Unknown') + '</p>' +
-            '<p>Price: ' + price + ' ' + currentCurrency + '</p>' +
+            '<a href="viewpage.php?tyre_id=' + p.tyre_id + '" class="product-link">' +
+                '<img src="' + p.img_url + '" alt="Tyre ' + p.tyre_id + '" />' +
+                '<h3>Tyre ' + p.tyre_id + ' - ' + p.size + ' ' + p.load_index + ' ' + (p.has_tube ? 'Tube' : 'Tubeless') + '</h3>' +
+                '<p>Serial: ' + p.serial_num + '</p>' +
+                '<p>Seller: ' + (p.seller_username || p.seller_name || 'Unknown') + '</p>' +
+                '<p>Price: ' + price + ' ' + currentCurrency + '</p>' +
+            '</a>' +
             '<button class="fav-btn" data-id="' + p.tyre_id + '">' +
                 (isFav ? '★ Remove Favourite' : '☆ Add Favourite') +
             '</button>';
 
         (function(tyreId) {
-            productEl.querySelector('.fav-btn').addEventListener('click', function() {
+            productEl.querySelector('.fav-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 toggleFavourite(tyreId);
+            });
+            
+            // Add click handler for the entire product card if needed
+            productEl.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('fav-btn')) {
+                    window.location.href = 'viewpage.php?tyre_id=' + tyreId;
+                }
             });
         })(p.tyre_id);
 
         productContainer.appendChild(productEl);
     }
+
 
     // Show/hide Load More button
     if (maxToShow < maxLimit) {
@@ -298,8 +316,8 @@ loadMoreBtn.addEventListener('click', function() {
 
 // Init
 function init() {
-    apiKey = localStorage.getItem('apiKey') || null;
-    userRole = localStorage.getItem('userRole') || null;
+    apiKey = sessionStorage.getItem('userApikey') || null;
+    userRole = sessionStorage.getItem('userRole') || null;
     productsShown = productsPerPage;
 
     if (apiKey) {
@@ -312,6 +330,7 @@ function init() {
             });
         });
     } else {
+        isGuest = true;
         loadProducts().then(function() {
             if (isGuest && guestViewsUsed >= guestViewLimit) {
                 alert('Guest view limit reached. Please log in for full access.');
