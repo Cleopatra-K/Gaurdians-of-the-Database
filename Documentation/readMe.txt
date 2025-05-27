@@ -47,7 +47,7 @@ A. Database Configuration (api.php or config.php):
 $db_host = 'localhost';
 $db_user = 'root';
 $db_pass = '';
-$db_name = 'price_comparison_db';
+$db_name = 'u23658462_GotD_project';
 
 3. TESTING CREDENTIALS
 ----------------------
