@@ -1,0 +1,281 @@
+/* General Body and Font Styling (Keep as is) */
+body {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f8f9fa; /* Light grey background */
+    color: #343a40; /* Dark grey text */
+}
+
+/* Sidebar Styling (Keep as is) */
+#sidebar {
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: #212529 !important; /* Darker background for sidebar */
+    padding-top: 1rem;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+#sidebar .nav-item {
+    margin-bottom: 0.5rem;
+}
+
+#sidebar .nav-link {
+    color: #adb5bd; /* Light grey text for links */
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+#sidebar .nav-link:hover,
+#sidebar .nav-link.active {
+    color: #ffffff; /* White text on hover/active */
+    background-color: #0d6efd; /* Bootstrap primary blue */
+    border-radius: 0.25rem;
+    margin-left: 0.5rem; /* Slight indent on hover/active */
+    margin-right: 0.5rem;
+}
+
+#sidebar .nav-link i {
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+}
+
+#sidebar .nav-link.active {
+    font-weight: 600;
+}
+
+/* Main Content Area (Keep as is) */
+main {
+    margin-left: 16.666667%; /* Offset for sidebar (col-md-3) */
+    padding: 2rem;
+}
+
+/* On smaller screens, adjust main content margin (Keep as is) */
+@media (max-width: 767.98px) {
+    main {
+        margin-left: 0;
+    }
+    #sidebar {
+        position: relative;
+        height: auto;
+        padding-top: 0;
+    }
+}
+
+.h2 {
+    color: #0d6efd; /* Bootstrap primary blue for main heading */
+    font-weight: 600;
+}
+
+/* Card-like Sections (Keep as is) */
+.tab-content {
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+}
+
+/* --- PRODUCT CARD STYLING (NEW SECTION) --- */
+
+#products-grid-container {
+    display: flex; /* Ensure flexbox for row behavior */
+    flex-wrap: wrap; /* Allow cards to wrap to next row */
+}
+
+.product-card {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0; /* Light border */
+    border-radius: 0.75rem; /* More rounded corners like the image */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* Stronger shadow */
+    overflow: hidden;
+    height: 100%; /* Ensure cards in a row have same height */
+    display: flex;
+    flex-direction: column;
+    text-align: center; /* Center content like image */
+    padding: 1rem;
+    transition: transform 0.2s ease-in-out;
+}
+
+.product-card:hover {
+    transform: translateY(-5px); /* Lift effect on hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12); /* Enhanced shadow on hover */
+}
+
+.product-image-container {
+    width: 100%;
+    height: 120px; /* Fixed height for image container */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.product-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* Ensure image fits without cropping */
+    border-radius: 0.5rem; /* Slight rounded corners for image */
+}
+
+.product-details {
+    flex-grow: 1; /* Allows details section to take available space */
+    text-align: left; /* Text alignment within details */
+    margin-bottom: 0.5rem;
+}
+
+.product-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #007bff; /* A prominent color for the main title, similar to image */
+    margin-bottom: 0.25rem;
+}
+
+.product-type {
+    font-size: 0.95rem;
+    color: #6c757d; /* Muted color for 'Tubeless' */
+    margin-bottom: 0.5rem;
+}
+
+.product-meta {
+    font-size: 0.85rem;
+    color: #6c757d; /* Lighter grey for meta info */
+    margin-bottom: 0.2rem;
+}
+
+.product-price {
+    font-size: 1.1rem;
+    font-weight: 700; /* Bold for price */
+    color: #28a745; /* Green for price */
+    margin-top: 0.5rem;
+}
+
+.product-actions {
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #eee; /* Light divider line */
+    display: flex;
+    justify-content: space-around; /* Distribute buttons */
+    gap: 0.5rem; /* Space between buttons */
+}
+
+.card-divider {
+    border-top: 1px solid #e9ecef; /* Matches image's divider */
+    margin: 1rem 0;
+}
+
+/* Button specific styling within cards */
+.edit-product-btn,
+.delete-product-btn {
+    width: 100%; /* Make buttons full width within their flex container */
+    padding: 0.6rem 1rem;
+    border-radius: 0.35rem; /* Slightly more rounded buttons */
+    font-size: 0.9rem;
+}
+
+/* Override Bootstrap's default table styles for products */
+/* If you still have other tables, consider making these more specific */
+.table-responsive {
+    /* No longer needed for products, but keep for requests if it applies */
+    /* Remove if you ensure products-grid-container is the primary visual */
+}
+
+/* If you delete the table entirely for products, you can remove these */
+/* .table thead th, .table tbody tr:hover, .table tbody td, .table img { ... } */
+/* You should keep them if the requests table still exists */
+
+/* Requests Tab Content (Keep as is) */
+.table thead th {
+    background-color: #e9ecef; /* Light grey for table headers */
+    color: #495057;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table tbody tr:hover {
+    background-color: #e2f2ff; /* Light blue on row hover */
+    cursor: pointer;
+}
+
+.table tbody td {
+    vertical-align: middle;
+}
+
+/* Actions Column (for buttons) */
+.table td:last-child {
+    white-space: nowrap; /* Prevent buttons from wrapping */
+}
+
+/* Image in Table */
+.table img {
+    max-width: 60px;
+    height: auto;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+
+/* Button Styling (Keep general, but ensure card buttons are more specific) */
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-outline-secondary.active {
+    background-color: #6c757d;
+    color: #ffffff;
+}
+
+/* Action buttons within tables (applies to requests table now) */
+.btn-sm i {
+    font-size: 0.9rem;
+}
+
+/* Modal Styling (Keep as is) */
+.modal-content {
+    border-radius: 0.75rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    background-color: #0d6efd;
+    color: #ffffff;
+    border-bottom: none;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+}
+
+.modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%); /* White close button */
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+.modal-footer {
+    border-top: none;
+    padding-top: 0;
+}
+
+#request-product-data {
+    max-height: 200px; /* Limit height of product data preformatted text */
+    overflow-y: auto; /* Enable scrolling for large data */
+    white-space: pre-wrap; /* Wrap text within pre tag */
+}
