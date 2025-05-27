@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (loginForm) {
         loginForm.addEventListener("submit", function (l) {
-            l.preventDefault();
+            l.preventDefault(); 
             validateLoginF();
         });
     }
@@ -77,7 +77,7 @@ function displayErrors(errors, formId) {
 }
 
 function validateLoginF() {
-    // Changed to 'login-username' to match PHP's expectation
+
     let username = document.querySelector('input[name="login-username"]').value.trim(); 
     let password = document.querySelector('input[name="login-password"]').value.trim();
 
@@ -85,12 +85,12 @@ function validateLoginF() {
 
     if (!username) {
         errors.push('Username is required.');
-    } // No specific format validation for username unless your backend has one
+    } 
 
     if (!password) { // Added explicit check for empty password
         errors.push('Password is required.');
     } else if (!validatorOfPassword(password)) {
-        // This message should reflect your backend's password validation rules
+
         errors.push('Password must be at least 8 characters, contain uppercase, lowercase, a digit, and a symbol.');
     }
 
@@ -131,8 +131,6 @@ function sendToAPILogin(username, password) { // Function now accepts username
                 // If backend sent JSON error, throw it
                 throw new Error(errorData.message || 'Login failed with an unexpected error.');
             }).catch(() => {
-                // If backend sent non-JSON error (e.g., PHP Fatal error), throw generic error
-                //throw new Error('Incorrect username or email. Please try again.');
                 throw new Error('Incorrect username or email. Please try again.');
             });
         }
@@ -148,7 +146,7 @@ function sendToAPILogin(username, password) { // Function now accepts username
             console.log("API Key received:", data.api_key); // Directly access data.api_key
             localStorage.setItem('userApiKey', data.api_key); // Store the API key
             // Use user.name and user.role from the 'user' object
-            localStorage.setItem('userName', data.user.name + ' ' + (data.user.surname || '')); // Surname might be optional
+            localStorage.setItem('userName', data.user.name + ' ' + (data.user.surname || '')); 
             localStorage.setItem('userRole', data.user.role); // Save role
 
             if (data.user.role === 'Seller') {
@@ -156,9 +154,9 @@ function sendToAPILogin(username, password) { // Function now accepts username
             } else if (data.user.role === 'Customer') {
                 window.location.href = '../php/index.php';
             } else if (data.user.role === 'Admin') {
-                window.location.href = 'admin.php'; // Assuming an admin page
+                window.location.href = 'admin.php';
             } else {
-                window.location.href = 'index.php'; // Default fallback
+                window.location.href = 'index.php'; 
             }
 
         } else {
