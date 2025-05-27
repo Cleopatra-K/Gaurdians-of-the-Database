@@ -1,0 +1,351 @@
+body {
+    background-color: #f4f7f9; /* Light blue-gray */
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    flex-direction: column;
+    color: var(--color-text); 
+}
+
+.welcome.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 175px;
+}
+
+.welcome.container h2 {
+    letter-spacing: -1px;
+    text-align: center;
+    margin-bottom: 0.225px;
+    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-heading);
+}
+
+.page-container {
+    margin-top: 150px;
+}
+
+#logo-img img {
+    width: 600px;
+    height: auto;
+    margin-top: -200px;
+}
+
+.slogan {
+    margin-top: 15px;
+}
+
+.button {
+    margin-top: -145px;
+}
+
+a {
+    text-decoration: none;
+    display: inline-block;
+}
+
+
+p {
+    font-size: 18px; 
+    line-height: 1.6;
+    color: #333; 
+    margin-bottom: 15px;
+    font-weight: 400; 
+}
+
+.button p {
+    font-size: 20px; 
+    margin-bottom: 20px;
+    color: #2a2f38; 
+}
+
+/* Slogan text */
+.slogan p {
+    font-size: 19px;
+    font-style: italic;
+    color: #1f2f40; 
+    margin-top: 20px;
+}
+
+/* Links inside paragraphs */
+p a {
+    color: #2f95a7;
+    font-weight: 500;
+    text-decoration: underline;
+}
+
+p a:hover {
+    color: #247a8a;
+}
+
+form p {
+    font-size: 17px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* Dark mode adjustments */
+body.dark-theme p {
+    color: #e2e8f0; /* Light gray for dark mode */
+}
+
+body.dark-theme .button p,
+body.dark-theme .slogan p {
+    color: #f0f4f8; /* Even lighter for important text */
+}
+
+body.dark-theme p a {
+    color: #3a9db1; /* Brighter teal for links */
+}
+
+/* Button Styling */
+.btn-style {
+    font-size: 18px;
+    font-weight: 500;
+    background-color: #2f95a7; /* Dark Grey - Charcoal */
+    color: #fff; /* Very light grey for text */
+    /* border: 2px solid #36454F; Same dark grey for border */
+    border-radius: 5px;
+    padding: 10px;
+    border-radius: 25px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* Enhanced shadow for buttons */
+}
+
+.btn-style:hover {
+    background-color: #1f2f40; /* Slightly lighter dark grey on hover */
+    color: #FFFFFF; /* White text on hover */
+    transform: translateY(-4px); /* Slightly more pronounced lift on hover */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* Even stronger shadow on hover */
+}
+
+
+/* Rule to hide elements dynamically controlled by JavaScript */
+.hidden {
+    display: none !important;
+}
+
+/* Style for the form itself */
+/* Form Styling - Larger and More Visible */
+form {
+    margin-top: 20px;
+    background: #f0f3f5; /* Darker white/light gray background */
+    padding: 40px; /* Increased padding */
+    border-radius: 15px; /* More rounded corners */
+    border: 2px solid #2f95a7; /* Matching your button color */
+    box-shadow: 0 8px 25px rgba(47, 149, 167, 0.25); /* Stronger blue-tinted shadow */
+    width: 500px; /* Wider form */
+    max-width: 90%;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 10;
+    transition: all 0.3s ease;
+    min-height: 400px; /* Minimum height */
+}
+
+/* Make form inputs larger */
+form input,
+form select {
+    padding: 15px 20px; /* Bigger padding */
+    font-size: 18px; /* Larger text */
+    margin: 15px 0; /* More spacing */
+    border-radius: 8px; /* Rounded inputs */
+}
+
+/* Form labels */
+form label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 16px;
+    color: #4a5568; /* Dark gray text */
+    font-weight: 500;
+}
+
+/* Style for when form is active */
+body.form-active .btn-style {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+/* Form title styling */
+form h2 {
+    color: #2f95a7;
+    margin-bottom: 30px;
+    font-size: 28px;
+    text-align: center;
+}
+
+/* Submit button styling */
+form button[type="submit"] {
+    background-color: #2f95a7;
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 18px;
+    margin-top: 25px;
+    width: 100%;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+form button[type="submit"]:hover {
+    background-color: #247a8a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(36, 122, 138, 0.3);
+}
+
+/* Dark theme adjustments */
+body.dark-theme form {
+    background: #2a2f38; /* Darker background */
+    border-color: #3a9db1; /* Brighter teal border */
+    box-shadow: 0 8px 30px rgba(58, 157, 177, 0.4);
+}
+
+body.dark-theme form label {
+    color: #e2e8f0; /* Lighter text in dark mode */
+}
+
+/* Animation for form appearance */
+@keyframes formFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+form {
+    animation: formFadeIn 0.4s ease-out;
+}
+
+/* Error message styling */
+.error-message {
+    color: #e53e3e;
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Form group styling */
+.form-group {
+    margin-bottom: 20px;
+}
+
+/* Input fields, including select */
+input[type="text"],
+input[type="username"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="url"],
+select {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid var(--color-accent-light);
+    border-radius: 5px;
+    font-family: 'Playfair Display', serif;
+    color: var(--color-text);
+    background-color: #ffffff;
+    box-sizing: border-box;
+}
+
+/* Style for error messages */
+#login-error-messages,
+#error-messages {
+    display: none;
+    color: var(--color-error);
+    background-color: #fce8e8; /* Keeping a light red background */
+    border: 1px solid var(--color-error);
+    padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    text-align: left;
+    font-size: 0.9em;
+    font-family: Arial, sans-serif;
+}
+
+/* class for when it should be visible */
+.error-message-visible {
+    display: block !important;
+}
+
+/* Style for the success message box */
+#success-message-box {
+    color: var(--color-success);
+    background-color: #e6ffe6; /* Keeping a light green background */
+    border: 1px solid var(--color-success);
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 5px;
+    text-align: left;
+    font-size: 1em;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#success-message-box code {
+    display: block;
+    background-color: var(--color-muted);
+    padding: 10px;
+    border: 1px dashed var(--color-accent-light);
+    border-radius: 4px;
+    font-weight: bold;
+    overflow-wrap: break-word;
+    margin-top: 10px;
+    color: var(--color-text);
+}
+
+#success-message-box p {
+    margin-bottom: 5px;
+} 
+
+/* Styling for the role-specific field containers */
+#customer-fields,
+#seller-fields,
+#admin-fields {
+    margin-top: 10px;
+    padding-top: 5px;
+}
+
+
+footer {
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+form {
+    margin-top: 20px;
+    background: var(--color-muted); /* Using a muted light grey from your variables */
+    padding: 25px;
+    border-radius: 10px;
+    border: 1px solid var(--color-accent-light); 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Enhanced subtle shadow for more lift */
+    width: 350px;
+    max-width: 90%;
+    box-sizing: border-box;
+}
+
+/* Dark theme rule for the form */
+body.dark-theme form {
+    background: var(--color-dark-card); /* A darker background for the form in dark mode */
+    border: 1px solid var(--color-dark-border); /* Dark theme border */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* More pronounced shadow for dark theme */
+}
