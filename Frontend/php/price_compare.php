@@ -52,52 +52,26 @@ include 'header.php';
         <!---creating a box that will hold all the below mentioned-->
 
         
-    <div class="f-container"> 
-    
-
-        <!-- FILTER DROPDOWN -->
-        <div class="filter-dropdown">
-            <label for="filter-general">Filter By:</label>
-            <select id="filter-general">
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-                <option value="title-asc">Title: A-Z</option>
-                <option value="title-desc">Title: Z-A</option>
-                <!-- <option value="category">Category</option>
-                <option value="country">Country of origin</option>
-                <option value="brand">Brand</option>
-                <option value="kitchen">Kitchen</option>-->  -->
-            </select>
-        </div>
-
-        <div class="filter-dropdown">
-            <label for="filter-brand">Filter By Brand:</label>
-                <select id="filter-brand">
-                    <option value="">All Brands</option>
-                    <!-- This will be populated dynamically from the database -->
-                </select>
-        </div>
-
-        <div class="filter-dropdown">
-           <label for="filter-category">Filter By Category:</label>
-                <select id="filter-category">
-                    <option value="">All Categories</option>
-                    <!-- This will be populated dynamically from the database -->
-                </select>
-        </div>
-
-        <div class="filter-dropdown">
-                <label for="filter-distributor">Filter By Distributor:</label>
-                <select id="filter-distributor">
-                    <option value="">All Distributors</option>
-                    <!-- This will be populated dynamically from the database -->
-                </select>
-            </div>
-
-
-        <!-- <button id="save-preferences-button">Save Preferences</button> -->
-
+    <div class="f-container">
+    <!-- Seller Filter -->
+    <div class="filter-dropdown">
+        <label for="filter-seller">Filter By Seller:</label>
+        <select id="filter-seller">
+            <option value="">All Sellers</option>
+            <!-- Will be populated dynamically -->
+        </select>
     </div>
+
+    <!-- Tube/Tubeless Filter -->
+    <div class="filter-dropdown">
+        <label for="filter-tube">Filter By Type:</label>
+        <select id="filter-tube">
+            <option value="">All Types</option>
+            <option value="1">Tube</option>
+            <option value="0">Tubeless</option>
+        </select>
+    </div>
+</div>
     
 
     <!-- Product Section -->

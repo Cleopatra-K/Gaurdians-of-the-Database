@@ -7,8 +7,10 @@
     <meta name="keywords" content="WheelDeal, cars, vehicles, buy, sell, automotive, marketplace">
     <title>WheelDeal - Sign Up</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Flex:wght@300;400;500;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="../css/login.css">
     
     <style>
@@ -23,15 +25,15 @@
     <div class="welcome container">
         <div class="img-title">
             <div id="logo-img">
-                <img src="../img/logo3.png" alt="Wheel Deal logo">
+                <img src="../img/logoOG.png" alt="Wheel Deal logo">
             </div>
             <div class="button">
-                <p>Welcome to WheelDeal. Please sign in or create an account.</p>
+                <p>Please sign in or create an account.</p>
                 <button onclick="showForm('login')" class="btn-style">Login</button>
                 <button onclick="showForm('signup')" class="btn-style">Create Account</button>
             </div>
             <div class="slogan">
-                <p>Get the best prices on your next ride.</p>
+                <p>Wheel deal with the problems - you get the best prices.</p>
             </div>
         </div>
 
@@ -67,7 +69,7 @@
 
                 <div id="seller-fields" class="hidden">
                     <input type="text" name="address" placeholder="Address" required>
-                    <input type="url" name="website" placeholder="Website (e.g., https://www.example.com)" required>
+                    <input type="url" name="website" placeholder="https://www.wheeldeal.com" required>
                     <input type="text" name="business_reg_num" placeholder="Business Registration Number" required>
                 </div>
 

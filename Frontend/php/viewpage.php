@@ -11,7 +11,7 @@ $tyre_id = intval($_GET['tyre_id']);
 
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'];
-$apiUrl = $protocol . '://' . $host . '/RootAssign5/GOTapi.php'; //!this has to be modified based on file structure
+$apiUrl = $protocol . '://' . $host . '/GotD/GOTapi.php'; //!this has to be modified based on file structure
 
 function makeApiRequest($url, $data, $headers = []) {
     $ch = curl_init($url);
@@ -93,7 +93,7 @@ if (isset($_SESSION['api_key'])) {
 <body>
 
 <div class="back-button-container">
-        <a href="/products.php" class="btn-style back-button">
+        <a href="price_compare.php" class="btn-style back-button">
             <i class="fas fa-arrow-left"></i> Back to Products
         </a>
 </div>
@@ -142,7 +142,7 @@ if (isset($_SESSION['api_key'])) {
                     </button>
                 </form>
             <?php else: ?>
-                <p class="login-prompt"><a href="/login.php">Login</a> to add to favorites</p>
+                <p class="login-prompt"><a href="signup.php">Login</a> to add to favorites</p>
             <?php endif; ?>
 
             <div class="product-details">
@@ -175,7 +175,7 @@ if (isset($_SESSION['api_key'])) {
             </form>
         </div>
         <?php else: ?>
-            <p class="login-prompt"><a href="/login.php">Login</a> to leave a review</p>
+            <p class="login-prompt"><a href="signup.php">Login</a> to leave a review</p>
         <?php endif; ?>
 
         <div class="reviews-list" id="reviews-list">
@@ -209,4 +209,4 @@ if (isset($_SESSION['api_key'])) {
 </script>
 <script src="../js/viewpage.js"></script>
 </body>
-</html>
+</html> 
